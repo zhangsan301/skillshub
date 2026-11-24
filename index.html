@@ -317,7 +317,7 @@ legend .li .v{margin-left:auto;color:var(--ink-2);font-variant-numeric:tabular-n
       <button class="nav-item" data-view="sync"><span class="n-ico">☁</span><span>云同步</span><span class="n-badge" id="badgeSync"></span></button>
     </nav>
     <div class="side-foot">
-      本地优先缓存于浏览器<br>可经飞书多维表格多端同步
+      数据保存在本浏览器<br>localStorage，不会上传
     </div>
   </aside>
 
@@ -361,9 +361,11 @@ legend .li .v{margin-left:auto;color:var(--ink-2);font-variant-numeric:tabular-n
 /* ================= 规则表：分类与标签 ================= */
 const CAT_DEFS = [
   {id:"office", name:"办公与文档", color:"#2563eb", strong:["公文","纪要"], kw:["文档","docx","word","ppt","幻灯片","演示文稿","pdf","excel","表格","sheet","csv","markdown","公文","纪要","录音","转写","排版","office","表单","周报","摘要","汇报"]},
-  {id:"dev", name:"研发与工程", color:"#0f766e", kw:["代码","编程","脚本","browser","浏览器","computer use","computer-use","自动化","github","网页","html","网站","应用","部署","api","mcp","爬虫","数据库","python","前端","后端","接口","工程","skill"]},
+  {id:"dev", name:"编程", color:"#0f766e", kw:["代码","编程","脚本","browser","浏览器","computer use","computer-use","自动化","github","网页","html","网站","应用","部署","api","mcp","爬虫","数据库","python","前端","后端","接口","工程","skill"]},
   {id:"data", name:"数据分析", color:"#0891b2", strong:["数据分析","chart","图表","指标"], kw:["数据分析","统计","指标","归因","实验","ab test","漏斗","留存","报表","仪表盘","dashboard","可视化","洞察","对账","核算","汇总","口径","异常","建模","数据查询","数据集"]},
+  {id:"insight", name:"调研", color:"#6366f1", strong:["调研","竞品","情报"], kw:["调研","情报","信源","竞品","行业研究","市场调研","市场研究","用户研究","用户调研","深度访谈","话题跟踪","趋势","reddit","hacker news","polymarket","舆情分析","尽调"]},
   {id:"design", name:"设计与创意", color:"#db2777", strong:["海报","logo","分镜","短剧","插画","视觉","动效","游戏","novel"], kw:["设计","海报","logo","视觉","插画","品牌","图像","图片","封面","分镜","短剧","动画","漫画","创意","摄影","提示词","seedream","seedance","剪辑","视频生成","配色","版式","手抄报","video","影片","画面","图标","photo","刊物","zine","visualization","视觉化","diagram","流程图","结构图","花字","motion","动效"]},
+  {id:"video", name:"影视剪辑", color:"#7c3aed", strong:["剪辑","ffmpeg","影视","字幕"], kw:["剪辑","视频剪辑","影视","ffmpeg","ffprobe","转码","混剪","抽帧","字幕","配音","响度","成片","调色","素材","短视频","reels","vlog","宣传片","片头","片尾","抠像","绿幕"]},
   {id:"medical", name:"医学健康", color:"#e11d48", strong:["医学","临床","病历","患者","医保","药品","诊断","体检","medical"], kw:["医学","临床","医疗","患者","病历","药品","医保","诊断","护理","体检","疾病","用药","pubmed","健康","循证","检查报告","医学生"]},
   {id:"legal", name:"法律合规", color:"#b45309", strong:["合同","合规","专利","隐私","个人信息","法务","法律"], kw:["法律","合同","合规","隐私","个人信息","版权","专利","审计","协议","法务","数据出境","dpa","条款","诉讼","商标"]},
   {id:"ecommerce", name:"电商与营销", color:"#ea580c", strong:["电商","私域","商品","店铺","直播"], kw:["电商","商品","客服","选品","详情页","直播","营销","投放","转化","店铺","淘宝","天猫","抖音","小红书","带货","活动策划","sku","私域","商家","卖家","跨境","出海","独立站"]},
@@ -407,7 +409,7 @@ let state = {
   isSeed: false,
   cats: CAT_DEFS.map(c=>({...c})),
   skills: [],
-  ui: {view:"dashboard", q:"", cat:"all", src:"all", status:"all", minStar:0, tag:"all", fav:"all", sort:"name", selected:[], mode:"list", ghUrl:"", ghResult:null}
+  ui: {view:"dashboard", q:"", cat:"all", src:"all", status:"all", minStar:0, tag:"all", fav:"all", sort:"name", selected:[], mode:"list", ghUrl:"", ghResult:null, catResult:null}
 };
 
 function uid(p){ return p + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-3); }
@@ -473,6 +475,23 @@ function makeSkill(o){
   };
 }
 
+function ensureCat(id){
+  if(state.cats.some(c=>c.id===id)) return;
+  const def = CAT_DEFS.find(c=>c.id===id);
+  if(!def) return;
+  const item = Object.assign({}, def, {kw:(def.kw||[]).slice(), strong:(def.strong||[]).slice()});
+  const oi = state.cats.findIndex(c=>c.id==="other");
+  if(oi >= 0) state.cats.splice(oi, 0, item); else state.cats.push(item);
+}
+function migrateCats(){
+  const dev = state.cats.find(c=>c.id==="dev");
+  if(dev && dev.name === "研发与工程") dev.name = "编程";
+  ["video","insight"].forEach(ensureCat);
+  state.skills.forEach(s=>{
+    if(/^ffmpeg/i.test(s.name)) s.category = "video";
+    else if(/^last30days/i.test(s.name)) s.category = "insight";
+  });
+}
 function loadState(){
   try{
     const raw = localStorage.getItem(LS_KEY);
@@ -482,12 +501,14 @@ function loadState(){
         state.skills = d.skills;
         if(Array.isArray(d.cats) && d.cats.length) state.cats = d.cats;
         state.savedAt = d.savedAt || null;
+        migrateCats();
         state._hash = JSON.stringify({ s: state.skills, c: state.cats });
         return;
       }
     }
   }catch(e){ console.warn("读取本地数据失败", e); }
   state.skills = SEED.map(s=>makeSkill(s));
+  migrateCats();
   state.isSeed = false;
   state.savedAt = new Date().toISOString();
   try{ localStorage.setItem(LS_KEY, JSON.stringify({ skills: state.skills, cats: state.cats, savedAt: state.savedAt })); }catch(e){}
@@ -533,7 +554,7 @@ const TITLES = {
   skills:["Skill 库","检索、筛选、标注与批量整理"],
   categories:["分类体系","定义分类与关键词规则，重新自动归类"],
   data:["导入 / 导出","扫描目录、导入导出与本地数据管理"],
-  sync:["云同步","飞书多维表格多端同步"]
+  sync:["云同步","GitHub Gist 多端同步"]
 };
 function setView(v){
   state.ui.view = v;
@@ -588,7 +609,7 @@ function mobileTip(){
     <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:650">手机版已适配 <span class="chip" style="background:var(--accent-soft);border-color:#cdece7;color:var(--accent)">底部导航</span></div>
     <div class="small muted" style="margin-top:6px;line-height:1.75">
       想当 App 用：iPhone 用 Safari 打开 → 分享 → 「添加到主屏幕」；安卓 Chrome → 右上 ⋮ → 「添加到主屏幕 / 安装应用」。<br>
-      数据与电脑端走同一个飞书多维表格，在「同步」页填一次中转地址即可两端一致。
+      数据与电脑端走同一个 Gist 库，在「同步」页登录一次即可两端一致。
     </div>
     <div style="margin-top:10px;text-align:right"><button class="btn sm" id="tipClose">知道了</button></div>
   </div>
@@ -959,6 +980,17 @@ function renderData(){
   let bytes = 0;
   try{ bytes = (localStorage.getItem(LS_KEY)||"").length; }catch(e){}
   return `
+  <section class="card" style="margin-bottom:14px;border-color:#cdece7;background:#f8fffd">
+    <div class="card-h"><h2>本站技能库</h2><span class="sub">读取站点 skills/index.json，一次装回来</span></div>
+    <div class="pad">
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn primary" data-catalog="1">⇩ 从本站加载技能库</button>
+        <span class="small muted">需要站点在线（GitHub Pages / doubao 链接）；本地双击打开时此按钮不可用，请用下方 JSON 导入。</span>
+      </div>
+      <div id="catResult" class="small muted" style="margin-top:10px;line-height:1.8">${state.ui.catResult || "站点根目录放 skills/index.json，里面写技能清单；换电脑或新手机时点一次即可全部装回。"}</div>
+    </div>
+  </section>
+
   <section class="card" style="margin-bottom:14px">
     <div class="card-h"><h2>从 GitHub 链接导入</h2><span class="sub">仓库 / 子目录 / 单个 SKILL.md / Gist 都支持</span></div>
     <div class="pad">
@@ -1019,12 +1051,12 @@ function renderData(){
     </section>
 
     <section class="card">
-      <div class="card-h"><h2>本地数据管理</h2><span class="sub">本地浏览器缓存，可同步到飞书</span></div>
+      <div class="card-h"><h2>本地数据管理</h2><span class="sub">数据只存在当前浏览器</span></div>
       <div class="pad">
         <div class="small" style="line-height:1.8;color:var(--ink-2)">
           当前共有 <b>${state.skills.length}</b> 个 Skill、<b>${st.favorite}</b> 个收藏、<b>${st.logCount}</b> 条使用记录。<br>
           只想留自己常用的：先给常用的点 ♥ 收藏，再点“仅保留收藏项”，目录快照就清干净了。<br>
-          未配置同步时数据只在当前浏览器；换浏览器、清缓存前建议导出 JSON 备份。
+          换浏览器、清缓存或使用无痕模式都会看不到已有数据，建议定期导出 JSON 备份。
         </div>
         <div class="row" style="margin-top:14px;flex-wrap:wrap">
           <button class="btn danger" data-reset="empty">清空全部 Skill</button>
@@ -1429,6 +1461,8 @@ document.addEventListener("click", e=>{
     state.cats.splice(state.cats.length-1, 0, {id, name:name.trim(), color:"#475569", kw:[]});
     render(); toast("已新增分类"); return;
   }
+  const cat = t.closest("[data-catalog]");
+  if(cat){ importSiteCatalog(); return; }
   const ghi = t.closest("[data-ghimport]");
   if(ghi){
     const box = document.getElementById("ghUrl");
@@ -1440,9 +1474,9 @@ document.addEventListener("click", e=>{
   const gh = t.closest("[data-gh]");
   if(gh){
     const act = gh.dataset.gh;
-    const ru = document.getElementById("sRelay"), rs = document.getElementById("sSecret"), au = document.getElementById("sAuto");
-    if(ru) syncCfg.relayUrl = ru.value.trim().replace(/\/+$/,"");
-    if(rs) syncCfg.relaySecret = rs.value.trim();
+    const tk = document.getElementById("sToken"), gi = document.getElementById("sGist"), au = document.getElementById("sAuto");
+    if(tk) syncCfg.token = tk.value.trim();
+    if(gi) syncCfg.gist = gi.value.trim().replace(/.*gist\.github\.com\/(?:[^/]+\/)?/,"").replace(/#.*$/,"");
     if(au) syncCfg.auto = au.checked;
     if(act==="save"){
       saveSyncCfg(); render(); toast(syncReady()? "配置已保存，正在同步…" : "配置已保存");
@@ -1453,13 +1487,14 @@ document.addEventListener("click", e=>{
     if(act==="pull"){ saveSyncCfg(); pullRemote(true); return; }
     if(act==="push"){
       saveSyncCfg();
-      if(!syncReady()){ toast("先填中转服务地址"); return; }
-      if(!confirm("用本地数据覆盖飞书多维表格？")) return;
+      if(!syncReady()){ toast("先填 Token 和 Gist ID"); return; }
+      if(!confirm("用本地数据覆盖云端？")) return;
       pushRemote(true); return;
     }
+    if(act==="creategist"){ saveSyncCfg(); createGist(); return; }
     if(act==="clear"){
-      if(!confirm("清除本机的同步配置？云端数据不会被删除。")) return;
-      syncCfg = { relayUrl:"https://skilllens-relay-ioudwzrmot.cn-hangzhou.fcapp.run", relaySecret:"", auto:true, lastSync:null, remoteSavedAt:null, lastError:"" };
+      if(!confirm("清除本机的同步配置？云端 Gist 不会被删除。")) return;
+      syncCfg = { token:"", gist:"", auto:true, lastSync:null, remoteSavedAt:null, lastError:"" };
       saveSyncCfg(); render(); toast("已清除同步配置"); return;
     }
     return;
@@ -1598,7 +1633,9 @@ document.addEventListener("input", e=>{
 
 /* ================= GitHub 链接解析导入 ================= */
 function ghHeaders(extra){
-  return Object.assign({ "Accept": "application/vnd.github+json" }, extra||{});
+  const h = Object.assign({ "Accept": "application/vnd.github+json" }, extra||{});
+  if(syncCfg && syncCfg.token) h["Authorization"] = "Bearer " + syncCfg.token;
+  return h;
 }
 async function ghJson(url){
   const res = await fetch(url, { headers: ghHeaders() });
@@ -1606,14 +1643,14 @@ async function ghJson(url){
     let msg = "";
     try{ const j = await res.json(); msg = j.message || ""; }catch(e){}
     if(res.status === 403 && /rate limit/i.test(msg)){
-      throw new Error("GitHub 接口限流（匿名每小时 60 次）。稍后再试，或直接粘贴单个 SKILL.md 的 raw 链接。");
+      throw new Error("GitHub 接口限流（匿名每小时 60 次）。到「云同步」填一个 Token 再重试，或直接粘贴单个 SKILL.md 的 raw 链接。");
     }
     throw new Error("GitHub " + res.status + (msg? "：" + msg : ""));
   }
   return await res.json();
 }
 async function fetchText(url){
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: syncCfg && syncCfg.token ? { "Authorization": "Bearer " + syncCfg.token } : {} });
   if(!res.ok) throw new Error("读取文件失败 HTTP " + res.status);
   return await res.text();
 }
@@ -1639,6 +1676,32 @@ function parseGithubUrl(input){
   m = u.match(/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
   if(m) return { type:"repo", owner:m[1], repo:m[2], branch:"", sub:"" };
   return null;
+}
+async function importSiteCatalog(){
+  const setR = (html)=>{ state.ui.catResult = html; const el=document.getElementById("catResult"); if(el) el.innerHTML=html; };
+  setR("正在读取本站技能库…");
+  try{
+    const res = await fetch("./skills/index.json", { cache:"no-store" });
+    if(!res.ok) throw new Error("没找到 skills/index.json（HTTP " + res.status + "）");
+    const d = await res.json();
+    const list = Array.isArray(d) ? d : (d.skills || []);
+    const items = list.filter(x=>x && x.name).map(x=>({
+      name:x.name, desc:x.desc || x.description || "",
+      category:x.category || null, manual:!!x.category,
+      tags:x.tags || null, source:"import",
+      path:x.path || ("skills/" + x.name),
+      note:x.note || "",
+      favorite:!!x.favorite
+    }));
+    const r = addGithubItems(items);
+    const names = items.slice(0,24).map(x=>x.name);
+    state.ui.catResult = `已从本站加载 ${items.length} 个技能：<b style="color:var(--accent)">新增 ${r.added}</b>，跳过重复 ${r.skipped}。`
+      + (names.length? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${names.map(n=>`<span class="chip mono">${esc(n)}</span>`).join("")}</div>`:"");
+    render(); toast("本站技能库导入完成：新增 " + r.added);
+  }catch(e){
+    setR('<span style="color:var(--danger)">读取失败：' + esc(e.message) + '。本地打开或离线时请改用「导入 JSON」。</span>');
+    toast("读取失败：" + e.message);
+  }
 }
 function addGithubItems(items){
   let added = 0, skipped = 0;
@@ -1727,9 +1790,11 @@ async function importFromGithub(rawUrl){
   }
 }
 
-/* ================= 云同步：飞书多维表格中转 ================= */
-const SYNC_KEY = "skilllens.sync.v2";
-let syncCfg = { relayUrl:"https://skilllens-relay-ioudwzrmot.cn-hangzhou.fcapp.run", relaySecret:"", auto:true, lastSync:null, remoteSavedAt:null, lastError:"" };
+/* ================= 云同步：GitHub Gist ================= */
+const SYNC_KEY = "skilllens.sync.v1";
+const GH_API = "https://api.github.com";
+const GH_FILE = "skilllens.json";
+let syncCfg = { token:"", gist:"", auto:true, lastSync:null, remoteSavedAt:null, lastError:"" };
 let pushTimer = null, syncing = false;
 
 function loadSyncCfg(){
@@ -1741,42 +1806,68 @@ function loadSyncCfg(){
 function saveSyncCfg(){
   try{ localStorage.setItem(SYNC_KEY, JSON.stringify(syncCfg)); }catch(e){}
 }
-function syncReady(){ return !!syncCfg.relayUrl; }
+function syncReady(){ return !!(syncCfg.token && syncCfg.gist); }
 function syncPending(){ return !!(syncCfg.lastSync && state.savedAt && state.savedAt > syncCfg.lastSync); }
 function syncBadge(){
-  if(!syncCfg.relayUrl) return "未设置";
+  if(!syncCfg.token) return "未设置";
+  if(!syncCfg.gist) return "待建库";
   if(syncing) return "同步中";
   if(syncPending()) return "待上传";
   return "已同步";
 }
 function syncPayload(){
   return { app:"SkillLens", version:2, savedAt: state.savedAt || new Date().toISOString(),
+           device: (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "unknown",
            cats: state.cats, skills: state.skills };
 }
-async function relayApi(path, method, body){
-  const base = (syncCfg.relayUrl||"").replace(/\/+$/,"");
-  const headers = { "Content-Type":"application/json" };
-  if(syncCfg.relaySecret) headers["X-Relay-Secret"] = syncCfg.relaySecret;
-  const res = await fetch(base + path, {
+async function ghApi(path, method, body){
+  const res = await fetch(GH_API + path, {
     method: method || "GET",
-    headers,
+    headers: {
+      "Authorization": "Bearer " + syncCfg.token,
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
     body: body ? JSON.stringify(body) : undefined
   });
-  let j = {};
-  try{ j = await res.json(); }catch(e){}
-  if(!res.ok || j.ok === false) throw new Error(j.error || ("中转 HTTP " + res.status));
-  return j;
+  if(!res.ok){
+    let msg = "";
+    try{ const j = await res.json(); msg = j.message || ""; }catch(e){}
+    throw new Error("GitHub " + res.status + (msg? "：" + msg : ""));
+  }
+  return await res.json();
 }
-async function pushRemote(manual){
-  if(!syncReady()){ if(manual) toast("先填中转服务地址并保存配置"); return; }
+async function createGist(){
+  if(!syncCfg.token){ toast("请先填 GitHub Token"); return; }
   syncing = true; refreshSyncBadge();
   try{
-    await relayApi("/api/sync", "POST", syncPayload());
+    const d = await ghApi("/gists", "POST", {
+      description: "SkillLens 个人技能库（私有同步）",
+      public: false,
+      files: { [GH_FILE]: { content: JSON.stringify(syncPayload(), null, 1) } }
+    });
+    syncCfg.gist = d.id;
+    syncCfg.lastSync = new Date().toISOString();
+    syncCfg.remoteSavedAt = state.savedAt;
+    saveSyncCfg();
+    toast("已创建私有 Gist：" + d.id.slice(0,8) + "…");
+    render();
+  }catch(e){ syncCfg.lastError = e.message; toast("创建失败：" + e.message); }
+  syncing = false; refreshSyncBadge();
+}
+async function pushRemote(manual){
+  if(!syncReady()){ if(manual) toast("先填 Token 并保存配置"); return; }
+  syncing = true; refreshSyncBadge();
+  try{
+    await ghApi("/gists/" + syncCfg.gist, "PATCH", {
+      description: "SkillLens 个人技能库（私有同步）",
+      files: { [GH_FILE]: { content: JSON.stringify(syncPayload(), null, 1) } }
+    });
     syncCfg.lastSync = new Date().toISOString();
     syncCfg.remoteSavedAt = state.savedAt;
     syncCfg.lastError = "";
     saveSyncCfg();
-    if(manual) toast("已上传到飞书多维表格");
+    if(manual) toast("已上传到云端");
     if(state.ui.view==="sync") render();
   }catch(e){
     syncCfg.lastError = e.message;
@@ -1786,7 +1877,15 @@ async function pushRemote(manual){
 }
 async function fetchRemote(){
   if(!syncReady()) return null;
-  return await relayApi("/api/sync", "GET");
+  const g = await ghApi("/gists/" + syncCfg.gist);
+  const f = g.files && g.files[GH_FILE];
+  if(!f) throw new Error("云端 Gist 里没有 " + GH_FILE);
+  let content = f.content;
+  if(f.truncated && f.raw_url){
+    const r = await fetch(f.raw_url, { headers: { "Accept": "application/vnd.github.raw" } });
+    content = await r.text();
+  }
+  return JSON.parse(content);
 }
 function applyRemote(d){
   state.skills = (d.skills||[]).map(x=>makeSkill(x));
@@ -1798,7 +1897,7 @@ function applyRemote(d){
   render();
 }
 async function pullRemote(manual){
-  if(!syncReady()){ if(manual) toast("先填中转服务地址并保存配置"); return; }
+  if(!syncReady()){ if(manual) toast("先填 Token 并保存配置"); return; }
   syncing = true; refreshSyncBadge();
   try{
     const d = await fetchRemote();
@@ -1827,7 +1926,7 @@ async function pullRemote(manual){
   if(state.ui.view==="sync") render();
 }
 async function syncNow(){
-  if(!syncReady()){ toast("先在下方填中转服务地址并保存配置"); return; }
+  if(!syncReady()){ toast("先在下方填 Token 并保存配置"); return; }
   syncing = true; refreshSyncBadge();
   try{
     const d = await fetchRemote();
@@ -1857,20 +1956,23 @@ function refreshSyncBadge(){
   if(b) b.textContent = syncBadge();
 }
 function renderSync(){
+  const tokenMasked = syncCfg.token ? syncCfg.token.slice(0,4) + "••••" + syncCfg.token.slice(-4) : "";
   return `
   <div class="grid" style="grid-template-columns:1.25fr 1fr">
     <section class="card">
-      <div class="card-h"><h2>连接飞书中转服务</h2><span class="sub">中转服务对接飞书多维表格，一次配置两端通用</span></div>
+      <div class="card-h"><h2>连接 GitHub Gist</h2><span class="sub">私有 Gist 当数据库，一次配置两端通用</span></div>
       <div class="pad">
         <div class="field">
-          <label>中转服务地址</label>
-          <input type="text" id="sRelay" placeholder="https://&lt;trigger&gt;.&lt;region&gt;.fcapp.run" value="${esc(syncCfg.relayUrl)}">
-          <div class="hint">部署中转（阿里云 FC / Cloudflare Worker / Vercel Function）后得到的公网地址，<b>不要</b>带 <span class="mono">/api/sync</span> 后缀，页面会自动拼接。</div>
+          <label>GitHub Token（只需 gist 权限）</label>
+          <input type="password" id="sToken" placeholder="ghp_… 或 github_pat_…" value="${esc(syncCfg.token)}">
+          <div class="hint">在 GitHub → Settings → Developer settings → Personal access tokens 生成，勾选 <b>gist</b> 即可。Token 只存在本机浏览器，不会写进云端数据或导出文件。</div>
         </div>
         <div class="field">
-          <label>访问口令（可选）</label>
-          <input type="password" id="sSecret" placeholder="与中转服务 RELAY_SECRET 一致即可" value="${esc(syncCfg.relaySecret)}">
-          <div class="hint">若中转设置了访问口令，这里填同一个；没设置可留空。口令只存在本机浏览器。</div>
+          <label>Gist ID（已有库就填，没有就留空后点“创建”）</label>
+          <div class="path-box">
+            <input type="text" id="sGist" placeholder="例如 6f3a1c…（Gist 链接最后一段）" value="${esc(syncCfg.gist)}">
+            <button class="btn sm" data-gh="creategist" style="white-space:nowrap">创建新库</button>
+          </div>
         </div>
         <div class="field row" style="gap:14px;flex-wrap:wrap">
           <label class="switch" style="margin:0"><input type="checkbox" id="sAuto" ${syncCfg.auto?"checked":""}> 自动同步（打开拉取、改动后 4 秒上传）</label>
@@ -1896,8 +1998,8 @@ function renderSync(){
         </div>
         ${syncCfg.lastError? `<div class="small" style="margin-top:10px;color:var(--danger)">最近一次错误：${esc(syncCfg.lastError)}</div>`:""}
         <div class="small muted" style="margin-top:12px;line-height:1.8">
-          · 首次使用：先在中转服务配好飞书应用与多维表格，再把公网地址填到上方 → 保存配置。<br>
-          · 手机端同样填一次中转地址与口令，两端从此共用一份数据。<br>
+          · 首次使用：填 Token → 点“创建新库”（或填已有 Gist ID）→ 保存配置。<br>
+          · 手机端同样操作一次即可，两端从此共用一份数据。<br>
           · 冲突策略：谁的时间更新以谁为准；两边都改过时会弹窗让你选择，不会静默覆盖。
         </div>
       </div>
@@ -1907,10 +2009,10 @@ function renderSync(){
   <section class="card" style="margin-top:14px">
     <div class="card-h"><h2>同步说明</h2></div>
     <div class="pad small" style="color:var(--ink-2);line-height:1.9">
-      1. 浏览器不直接接触飞书凭证：App ID / App Secret 只保存在中转服务，页面只访问中转地址。<br>
-      2. 技能按 <span class="mono">SkillID</span> 逐条对账：本地新增/修改/删除会同步到多维表格，分类体系快照存在 Meta 表。<br>
-      3. 自动同步只在打开页面与改动后触发；遇到“云端更新且本地也改过”会提示手动处理。<br>
-      4. 换设备或清理浏览器前，可在「导入 / 导出」页导出 JSON 做离线备份。
+      1. 数据以整份快照写入 Gist 的 <span class="mono">skilllens.json</span>，包含技能、分类、标签、收藏、评分、备注与使用记录。<br>
+      2. 自动同步只会后台静默上传，遇到“云端更新且本地也改过”会提示你手动处理。<br>
+      3. 建议用只勾 gist 权限的 Token；Token 泄露可随时在 GitHub 撤销。<br>
+      4. Gist 是私有的，但请勿把 Token 发给他人；换电脑时导出 JSON 仍可作离线备份。
     </div>
   </section>`;
 }
