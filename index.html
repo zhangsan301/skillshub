@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkillLens">
+<title>SkillLens · Skill 分类管理器</title>
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --ink:#0f172a; --ink-2:#475569; --ink-3:#94a3b8;
+  --line:#e6e9ef; --line-2:#eef1f5; --accent:#0f766e; --accent-soft:#e6f4f1;
+  --amber:#b45309; --danger:#dc2626; --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px -12px rgba(15,23,42,.18);
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--ink); font-size:14px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+::selection{background:#cdece7}
+
+/* ============ 布局 ============ */
+.app{display:flex;min-height:100vh}
+.side{
+  width:220px;flex:0 0 220px;background:#0f172a;color:#e2e8f0;padding:20px 14px;
+  display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px}
+.brand-mark{
+  width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#0f766e,#0891b2);
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px;letter-spacing:-.5px;
+}
+.brand-txt strong{display:block;font-size:15px;color:#fff;letter-spacing:.3px}
+.brand-txt span{font-size:11px;color:#94a3b8}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;background:none;border:0;
+  color:#cbd5e1;font-size:13.5px;text-align:left;width:100%;transition:.15s;
+}
+.nav-item:hover{background:#1e293b;color:#fff}
+.nav-item.active{background:#134e4a;color:#fff;box-shadow:inset 0 0 0 1px #115e59}
+.nav-item .n-ico{width:18px;text-align:center;opacity:.85;font-size:14px}
+.nav-item .n-badge{margin-left:auto;font-size:11px;color:#94a3b8}
+.side-foot{margin-top:auto;font-size:11.5px;color:#64748b;padding:0 6px;line-height:1.7}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+
+/* ============ 顶栏 ============ */
+.topbar{
+  display:flex;align-items:center;gap:12px;padding:16px 26px;border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.86);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20;
+}
+.topbar h1{font-size:16px;margin:0;font-weight:650;letter-spacing:-.2px}
+.topbar .crumb{font-size:12px;color:var(--ink-3);margin-top:1px}
+.top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:13px;
+  color:var(--ink-2);display:inline-flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap;
+}
+.btn:hover{border-color:#cbd5e1;background:#fafbfc;color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#0d6a63;border-color:#0d6a63}
+.btn.ghost-d{border-color:#e2e8f0;background:#0f172a;color:#e2e8f0}
+.btn.ghost-d:hover{background:#1e293b}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:7px}
+.btn.danger{color:var(--danger);border-color:#fecaca;background:#fef2f2}
+.btn.danger:hover{background:#fee2e2}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ============ 通用 ============ */
+.wrap{padding:24px 26px 60px;max-width:1320px;width:100%}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;gap:10px;padding:15px 18px 0}
+.card-h h2{font-size:14px;margin:0;font-weight:640}
+.card-h .sub{font-size:12px;color:var(--ink-3)}
+.card-h .sp{margin-left:auto}
+.pad{padding:15px 18px 18px}
+.grid{display:grid;gap:14px}
+.muted{color:var(--ink-3)}
+.small{font-size:12px}
+.row{display:flex;align-items:center;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;
+  background:#f1f5f9;color:var(--ink-2);border:1px solid transparent;white-space:nowrap;
+}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85}
+.chip.click{cursor:pointer}
+.chip.click:hover{border-color:#cbd5e1}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi .lab{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.kpi .val{font-size:26px;font-weight:680;letter-spacing:-1px;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .hint{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.kpi .bar-line{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--line-2)}
+.kpi .bar-line i{display:block;height:100%;background:var(--accent)}
+
+/* 图表 */
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar-row{display:grid;grid-template-columns:132px 1fr 46px;align-items:center;gap:10px;font-size:12.5px}
+.bar-row .nm{display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-row .nm .dot{width:8px;height:8px;border-radius:2px;flex:0 0 8px}
+.track{height:9px;border-radius:6px;background:#f1f5f9;overflow:hidden}
+.fill{height:100%;border-radius:6px;transition:width .4s cubic-bezier(.2,.8,.2,1)}
+.bar-row .num{text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.donut{display:flex;align-items:center;gap:20px}
+.donut svg{width:132px;height:132px;flex:0 0 132px}
+legend{display:flex;flex-direction:column;gap:6px;font-size:12px}
+legend .li{display:flex;align-items:center;gap:7px}
+legend .li .dot{width:8px;height:8px;border-radius:2px}
+legend .li .v{margin-left:auto;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+/* 列表 */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line-2)}
+.search{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:7px 11px}
+.search input{flex:1;border:0;background:none;outline:none;font-size:13px}
+.sel{border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:#fff;font-size:12.5px;color:var(--ink-2);outline:none}
+.sel:focus{border-color:var(--accent)}
+.skill-list{display:flex;flex-direction:column}
+.skill{border-bottom:1px solid var(--line-2);padding:13px 18px;display:flex;gap:12px;transition:.12s}
+.skill:hover{background:#fbfcfd}
+.skill.off{opacity:.55}
+.skill .ck{margin-top:3px;accent-color:var(--accent);width:15px;height:15px;flex:0 0 15px}
+.skill .body{flex:1;min-width:0;cursor:pointer}
+.skill .line1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.skill .name{font-weight:620;font-size:13.5px;letter-spacing:-.1px}
+.skill .desc{font-size:12.5px;color:var(--ink-2);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.skill .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:11.5px;color:var(--ink-3)}
+.skill .acts{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.icon-btn{border:1px solid transparent;background:none;border-radius:7px;padding:4px 7px;color:var(--ink-3);font-size:13px;transition:.12s}
+.icon-btn:hover{background:#f1f5f9;color:var(--ink)}
+.stars{display:inline-flex;gap:1px;font-size:12px;color:#f59e0b;letter-spacing:-1px}
+.empty{padding:46px 20px;text-align:center;color:var(--ink-3);font-size:13px}
+.batch{display:flex;align-items:center;gap:8px;padding:9px 18px;background:#f8fafc;border-bottom:1px solid var(--line-2);flex-wrap:wrap;font-size:12.5px}
+
+/* 表格 */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-weight:600;color:var(--ink-3);font-size:11.5px;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.tbl tr:hover td{background:#fbfcfd}
+.tbl input[type=text]{width:100%;border:1px solid transparent;background:transparent;border-radius:7px;padding:5px 7px;font-size:12.5px;outline:none}
+.tbl input[type=text]:focus{border-color:var(--accent);background:#fff}
+.tbl input[type=color]{width:26px;height:26px;border:0;background:none;padding:0;border-radius:6px;cursor:pointer}
+
+/* 抽屉/弹层 */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.35);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+.overlay.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;top:0;right:0;height:100vh;width:min(460px,94vw);background:#fff;z-index:50;
+  box-shadow:-20px 0 50px -24px rgba(15,23,42,.4);transform:translateX(102%);transition:transform .24s cubic-bezier(.2,.8,.2,1);
+  display:flex;flex-direction:column;
+}
+.sheet.on{transform:none}
+.sheet-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px}
+.sheet-h h3{margin:0;font-size:15px}
+.sheet-h .close{margin-left:auto}
+.sheet-b{padding:18px 20px 30px;overflow:auto;flex:1}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:11.5px;color:var(--ink-3);margin-bottom:5px;letter-spacing:.2px}
+.field input[type=text],.field input[type=password],.field input[type=search],.field textarea,.field select{
+  width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;font-size:13px;background:#fff;
+}
+.field textarea{resize:vertical;min-height:78px;line-height:1.6}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field .hint{font-size:11px;color:var(--ink-3);margin-top:4px}
+.path-box{display:flex;gap:6px}
+.path-box input{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px !important}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini-stat{background:#f8fafc;border:1px solid var(--line-2);border-radius:10px;padding:9px 11px}
+.mini-stat .k{font-size:11px;color:var(--ink-3)}
+.mini-stat .v{font-size:16px;font-weight:640;margin-top:2px;font-variant-numeric:tabular-nums}
+.star-pick{display:flex;gap:3px;font-size:22px;color:#e2e8f0;cursor:pointer}
+.star-pick span.on{color:#f59e0b}
+.switch{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2)}
+.switch input{width:16px;height:16px;accent-color:var(--accent)}
+
+/* toast */
+#toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#0f172a;color:#e6edf7;padding:9px 16px;border-radius:10px;font-size:12.5px;box-shadow:var(--shadow);animation:tin .2s ease}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* 拖放 */
+.drop{border:1.5px dashed #cbd5e1;border-radius:12px;padding:26px;text-align:center;color:var(--ink-2);background:#fbfcfd;transition:.15s;cursor:pointer}
+.drop:hover,.drop.hot{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+
+@media (max-width:900px){
+  .app{flex-direction:column}
+  .grid{grid-template-columns:1fr !important}
+  .donut{flex-wrap:wrap}
+  .topbar{flex-wrap:wrap;gap:8px}
+  .topbar .top-actions{width:100%}
+  .skill{flex-wrap:wrap}
+  .skill .body{flex:1 1 calc(100% - 44px)}
+  .brand{display:none}
+  .howto{grid-template-columns:1fr !important}
+  .brand-mark{width:26px;height:26px;font-size:12px}
+  .nav-item{font-size:11.5px;padding:6px 8px;gap:6px}
+  .nav-item .n-ico{display:none}
+  .skill .acts{width:100%;justify-content:flex-end;border-top:1px dashed var(--line-2);padding-top:6px}
+  .side{width:100%;flex:none;height:auto;position:relative;flex-direction:row;align-items:center;gap:10px;padding:10px 12px;overflow-x:auto}
+  .brand{padding:0}
+  .brand-txt{display:none}
+  .nav{flex-direction:row;gap:4px}
+  .nav-item{padding:7px 10px;font-size:12.5px;white-space:nowrap}
+  .nav-item .n-badge,.side-foot{display:none}
+  .wrap{padding:16px 14px 50px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .topbar{padding:12px 14px}
+  .top-actions .btn span.txt{display:none}
+  .bar-row{grid-template-columns:96px 1fr 34px}
+}
+
+/* ============ 手机 App 层（≤820px） ============ */
+.app-tip{display:none}
+.tabbar{display:none}
+.fab{display:none}
+.fstrip{display:contents}
+@media (max-width:820px){
+  html,body{overscroll-behavior-y:contain}
+  body{font-size:15px;background:#f5f6f8}
+  .app{display:block}
+  .side{display:none}
+  .main{display:block}
+  .topbar{
+    position:sticky;top:0;z-index:30;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
+  }
+  .topbar h1{font-size:18px;font-weight:700}
+  .topbar .crumb{display:none}
+  .top-actions{display:none}
+  .wrap{padding:14px 14px calc(100px + env(safe-area-inset-bottom));max-width:none}
+  .card{border-radius:16px}
+  .card-h{padding:14px 16px 0;flex-direction:column;align-items:flex-start;gap:3px}
+  .card-h h2{font-size:15px;width:100%}
+  .card-h .sub{line-height:1.6}
+  .card-h .sp{margin-left:0}
+  .pad{padding:14px 16px 16px}
+  .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
+  .btn{padding:9px 13px;font-size:14px;border-radius:11px;min-height:38px}
+  .btn.sm{padding:7px 10px;font-size:13px;min-height:32px}
+  input,select,textarea{font-size:16px !important}
+  .skill{padding:13px 14px;gap:10px;background:#fff;border-bottom:1px solid var(--line-2)}
+  .skill:hover{background:#fff}
+  .skill .name{font-size:15px}
+  .skill .desc{font-size:13px;-webkit-line-clamp:3}
+  .skill .meta{font-size:12px}
+  .skill .acts{width:100%;justify-content:flex-end;gap:2px;border-top:1px dashed var(--line-2);padding-top:8px;margin-top:2px}
+  .skill-list{background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+  .app-tip{display:block}
+  .sheet{
+    left:0;right:0;top:auto;bottom:0;width:100%;height:calc(100vh - 46px - env(safe-area-inset-top));
+    border-radius:18px 18px 0 0;transform:translateY(102%);
+  }
+  .sheet.on{transform:none}
+  .sheet-h{padding:16px 16px 12px}
+  .sheet-b{padding:16px 16px calc(26px + env(safe-area-inset-bottom))}
+  body.sheet-open .tabbar,body.sheet-open .fab{display:none}
+  body.sheet-open{overflow:hidden}
+  .toolbar{padding:12px 14px;gap:8px}
+  .search{padding:10px 12px;border-radius:12px}
+  .fstrip{display:flex;gap:8px;overflow-x:auto;flex:1 1 100%;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .fstrip::-webkit-scrollbar{display:none}
+  .fstrip .sel{flex:0 0 auto;padding:8px 10px;font-size:13px}
+  .batch{padding:8px 14px;gap:6px;font-size:12.5px}
+  .batch .btn.sm{padding:6px 9px}
+  #toasts{bottom:calc(150px + env(safe-area-inset-bottom));width:calc(100% - 32px);left:16px;transform:none;align-items:stretch}
+  .toast{text-align:center}
+  .tabbar{
+    display:grid;position:fixed;left:0;right:0;bottom:0;z-index:60;
+    grid-template-columns:repeat(5,1fr);gap:2px;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  }
+  .tabbar button{
+    background:none;border:0;border-radius:12px;display:flex;flex-direction:column;align-items:center;
+    gap:3px;padding:6px 2px 4px;color:#94a3b8;font-size:11.5px;letter-spacing:.2px;
+  }
+  .tabbar button.active{color:var(--accent);background:var(--accent-soft);font-weight:650}
+  .tabbar .t-ico{font-size:19px;line-height:1.1;opacity:.9}
+  .tabbar .t-txt{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fab.show{
+    display:grid;place-items:center;position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));
+    z-index:61;width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:#fff;
+    font-size:26px;line-height:1;box-shadow:0 8px 20px rgba(15,118,110,.35);
+  }
+  .fab:active{transform:scale(.96)}
+}
+@media (max-width:380px){
+  .tabbar .t-txt{font-size:10.5px}
+  .wrap{padding-left:10px;padding-right:10px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark">SL</div>
+      <div class="brand-txt"><strong>SkillLens</strong><span>我的常用 Skill 记录本</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="nav-item" data-view="dashboard"><span class="n-ico">◱</span><span>总览看板</span></button>
+      <button class="nav-item" data-view="skills"><span class="n-ico">☰</span><span>Skill 库</span><span class="n-badge" id="badgeTotal"></span></button>
+      <button class="nav-item" data-view="categories"><span class="n-ico">◈</span><span>分类体系</span><span class="n-badge" id="badgeCats"></span></button>
+      <button class="nav-item" data-view="data"><span class="n-ico">⇅</span><span>导入 / 导出</span></button>
+      <button class="nav-item" data-view="sync"><span class="n-ico">☁</span><span>云同步</span><span class="n-badge" id="badgeSync"></span></button>
+    </nav>
+    <div class="side-foot">
+      本地优先缓存于浏览器<br>可经飞书多维表格多端同步
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">总览看板</h1>
+        <div class="crumb" id="pageCrumb">分类分布、覆盖情况与使用情况</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn" id="btnScan">⇪ 扫描 skill 目录</button>
+        <button class="btn" id="btnAdd">＋ 新增 Skill</button>
+        <button class="btn primary" id="btnExport">导出 JSON</button>
+      </div>
+    </header>
+    <div class="wrap" id="viewRoot"></div>
+  </main>
+</div>
+
+<div class="tabbar" id="tabbar"></div>
+<button class="fab" id="fabAdd" aria-label="新增 Skill">＋</button>
+
+<div class="overlay" id="overlay"></div>
+
+<aside class="sheet" id="sheet">
+  <div class="sheet-h">
+    <div>
+      <h3 id="sheetTitle">Skill 详情</h3>
+      <div class="small muted" id="sheetSub"></div>
+    </div>
+    <button class="btn sm close" id="sheetClose">关闭</button>
+  </div>
+  <div class="sheet-b" id="sheetBody"></div>
+</aside>
+
+<div id="toasts"></div>
+<input type="file" id="fileInput" accept=".json,.csv,.md,.txt" style="display:none" multiple>
+<input type="file" id="dirInput" webkitdirectory directory multiple style="display:none">
+
+<script>
+/* ================= 规则表：分类与标签 ================= */
+const CAT_DEFS = [
+  {id:"office", name:"办公与文档", color:"#2563eb", strong:["公文","纪要"], kw:["文档","docx","word","ppt","幻灯片","演示文稿","pdf","excel","表格","sheet","csv","markdown","公文","纪要","录音","转写","排版","office","表单","周报","摘要","汇报"]},
+  {id:"dev", name:"研发与工程", color:"#0f766e", kw:["代码","编程","脚本","browser","浏览器","computer use","computer-use","自动化","github","网页","html","网站","应用","部署","api","mcp","爬虫","数据库","python","前端","后端","接口","工程","skill"]},
+  {id:"data", name:"数据分析", color:"#0891b2", strong:["数据分析","chart","图表","指标"], kw:["数据分析","统计","指标","归因","实验","ab test","漏斗","留存","报表","仪表盘","dashboard","可视化","洞察","对账","核算","汇总","口径","异常","建模","数据查询","数据集"]},
+  {id:"design", name:"设计与创意", color:"#db2777", strong:["海报","logo","分镜","短剧","插画","视觉","动效","游戏","novel"], kw:["设计","海报","logo","视觉","插画","品牌","图像","图片","封面","分镜","短剧","动画","漫画","创意","摄影","提示词","seedream","seedance","剪辑","视频生成","配色","版式","手抄报","video","影片","画面","图标","photo","刊物","zine","visualization","视觉化","diagram","流程图","结构图","花字","motion","动效"]},
+  {id:"medical", name:"医学健康", color:"#e11d48", strong:["医学","临床","病历","患者","医保","药品","诊断","体检","medical"], kw:["医学","临床","医疗","患者","病历","药品","医保","诊断","护理","体检","疾病","用药","pubmed","健康","循证","检查报告","医学生"]},
+  {id:"legal", name:"法律合规", color:"#b45309", strong:["合同","合规","专利","隐私","个人信息","法务","法律"], kw:["法律","合同","合规","隐私","个人信息","版权","专利","审计","协议","法务","数据出境","dpa","条款","诉讼","商标"]},
+  {id:"ecommerce", name:"电商与营销", color:"#ea580c", strong:["电商","私域","商品","店铺","直播"], kw:["电商","商品","客服","选品","详情页","直播","营销","投放","转化","店铺","淘宝","天猫","抖音","小红书","带货","活动策划","sku","私域","商家","卖家","跨境","出海","独立站"]},
+  {id:"hr", name:"人力与组织", color:"#65a30d", kw:["招聘","应聘","候选人","面试","入职","绩效","组织","人力","简历","offer","校招","实习","员工","岗位","人才","编制"]},
+  {id:"research", name:"学术科研", color:"#8b5cf6", kw:["论文","研究","量表","实验设计","学术","期刊","审稿","开题","课题","文献","社科","实证","问卷","假设","院士","基金","访谈","竞赛","奖学金","申报","academic","literature","registry"]},
+  {id:"lark", name:"飞书与协作", color:"#0284c7", strong:["飞书","lark","多维表格"], kw:["飞书","lark","多维表格","日历","日程","审批","即时通讯","邮箱","okr","知识库","云空间","视频会议","妙记","通讯录","白板","画板","会议室","待办","群聊"]},
+  {id:"life", name:"生活与出行", color:"#16a34a", strong:["fitness","健身","旅行","攻略"], kw:["地图","路线","天气","音乐","旅游","攻略","校园","社团","考试","健身","美食","导航","出行","景点","公交","地铁","酒店","菜谱","weather","气象","温度","music","cooking","礼品卡","旅行","出游","升学","考研","毕业","考公","求职"]},
+  {id:"finance", name:"商业与产品", color:"#ca8a04", kw:["金融","股票","财报","汇率","基金","预算","商务","投标","提案","销售","经营","roi","商机","财务","定价","投资","融资","估值","产品分析","产品经理","prd","需求分析","roadmap","商业","产品","市场","竞争","工资","薪资","个税","社保","薪酬","记账","报销","发票"]},
+  {id:"content", name:"内容与传播", color:"#9333ea", strong:["新闻","公众号","文案","标题","舆情"], kw:["公众号","文案","标题","新闻","改写","多平台","自媒体","内容日历","舆情","传播","选题","口播","社交媒体","软文","爆款","润色","修订","校对","小说","网文","剧本"]},
+  {id:"other", name:"其他", color:"#64748b", kw:[]}
+];
+
+const TAG_DEFS = [
+  {tag:"视频", kw:["视频","分镜","剪辑","短剧","动画","影视","运镜"]},
+  {tag:"图片", kw:["图片","图像","海报","视觉","插画","封面","生图","设计稿"]},
+  {tag:"文档", kw:["文档","docx","word","pdf","markdown","公文","纪要"]},
+  {tag:"表格", kw:["表格","excel","csv","sheet","多维表格","台账"]},
+  {tag:"PPT", kw:["ppt","幻灯片","演示文稿"]},
+  {tag:"飞书", kw:["飞书","lark"]},
+  {tag:"医学", kw:["医学","临床","医疗","患者","病历","药品"]},
+  {tag:"法律", kw:["法律","合同","合规","专利","隐私","协议"]},
+  {tag:"招聘", kw:["招聘","面试","候选人","简历","入职","校招"]},
+  {tag:"电商", kw:["电商","商品","店铺","淘宝","抖音","带货"]},
+  {tag:"论文", kw:["论文","期刊","审稿","量表","文献"]},
+  {tag:"自动化", kw:["自动化","browser","浏览器","computer use","脚本","爬虫"]},
+  {tag:"数据分析", kw:["数据分析","统计","指标","归因","报表"]},
+  {tag:"创意", kw:["创意","设计","品牌","配色","版式"]},
+  {tag:"AI 生成", kw:["seedream","seedance","提示词","生成","aigc"]},
+  {tag:"地图", kw:["地图","路线","导航","出行","景点"]},
+  {tag:"财务", kw:["金融","股票","财报","预算","汇率","基金"]},
+  {tag:"营销", kw:["营销","投放","转化","活动策划","文案","爆款"]},
+  {tag:"学习", kw:["考试","校园","学习","课程","备考"]},
+  {tag:"合规审计", kw:["审计","合规","个人信息","数据出境","pia"]}
+];
+
+/* ================= 状态 ================= */
+const LS_KEY = "skilllens.v2";
+const SEED = [];
+let state = {
+  savedAt: null,
+  isSeed: false,
+  cats: CAT_DEFS.map(c=>({...c})),
+  skills: [],
+  ui: {view:"dashboard", q:"", cat:"all", src:"all", status:"all", minStar:0, tag:"all", fav:"all", sort:"name", selected:[], mode:"list", ghUrl:"", ghResult:null}
+};
+
+function uid(p){ return p + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-3); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function norm(s){ return String(s||"").toLowerCase(); }
+
+function catOf(id){ return state.cats.find(c=>c.id===id) || state.cats[state.cats.length-1]; }
+
+/* 分类器：name 命中权重 3，description 命中权重 1 */
+function classify(name, desc){
+  const n = norm(name), d = norm(desc);
+  const scores = {};
+  state.cats.forEach(c=>{ scores[c.id]=0; });
+  state.cats.forEach(c=>{
+    if(!c.kw || !c.kw.length) return;
+    c.kw.forEach(k=>{
+      const kk = norm(k);
+      if(!kk) return;
+      const strong = (c.strong||[]).some(x=>norm(x)===kk);
+      const wName = strong ? 10 : 4, wDesc = strong ? 4 : 2;
+      if(n.includes(kk)) scores[c.id] += wName;
+      const hits = Math.min(d.split(kk).length - 1, 2);
+      if(hits > 0) scores[c.id] += hits * wDesc;
+    });
+  });
+  let best = "other", bv = 0;
+  state.cats.forEach(c=>{
+    if(c.id==="other") return;
+    if(scores[c.id] > bv){ bv = scores[c.id]; best = c.id; }
+  });
+  return { cat: bv>0 ? best : "other", score: bv };
+}
+
+function autoTags(name, desc, limit){
+  const n = norm(name), d = norm(desc);
+  const out = [];
+  TAG_DEFS.forEach(t=>{
+    if(t.kw.some(k=>n.includes(norm(k)) || d.includes(norm(k)))) out.push(t.tag);
+  });
+  return out.slice(0, limit||4);
+}
+
+function makeSkill(o){
+  const name = o.name || "未命名 Skill";
+  const desc = o.desc || "";
+  const auto = classify(name, desc);
+  return {
+    id: o.id || uid("s_"),
+    name, desc,
+    path: o.path || "",
+    source: o.source || "manual",
+    category: o.category || auto.cat,
+    manual: !!o.manual,
+    tags: o.tags || autoTags(name, desc),
+    enabled: o.enabled !== false,
+    rating: o.rating || 0,
+    note: o.note || "",
+    usage: o.usage || 0,
+    favorite: !!o.favorite,
+    logs: Array.isArray(o.logs) ? o.logs : [],
+    lastUsed: o.lastUsed || null,
+    createdAt: o.createdAt || new Date().toISOString()
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      if(d && Array.isArray(d.skills) && d.skills.length){
+        state.skills = d.skills;
+        if(Array.isArray(d.cats) && d.cats.length) state.cats = d.cats;
+        state.savedAt = d.savedAt || null;
+        state._hash = JSON.stringify({ s: state.skills, c: state.cats });
+        return;
+      }
+    }
+  }catch(e){ console.warn("读取本地数据失败", e); }
+  state.skills = SEED.map(s=>makeSkill(s));
+  state.isSeed = false;
+  state.savedAt = new Date().toISOString();
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({ skills: state.skills, cats: state.cats, savedAt: state.savedAt })); }catch(e){}
+  state._hash = JSON.stringify({ s: state.skills, c: state.cats });
+}
+function saveState(){
+  state.isSeed = false;
+  state.savedAt = new Date().toISOString();
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({ skills: state.skills, cats: state.cats, savedAt: state.savedAt }));
+  }catch(e){ toast("本地保存失败：存储空间可能已满"); }
+  schedulePush();
+}
+
+let toastTimer = null;
+function toast(msg){
+  const box = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(()=>{ el.style.opacity="0"; el.style.transition=".3s"; setTimeout(()=>el.remove(),320); }, 2600);
+}
+function fmtDate(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if(isNaN(d)) return "—";
+  const p = x=>String(x).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(()=>toast("已复制到剪贴板"), ()=>toast("复制失败，请手动选择"));
+  } else {
+    const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("已复制到剪贴板"); }catch(e){ toast("复制失败"); }
+    ta.remove();
+  }
+}
+
+/* ================= 视图路由 ================= */
+const TITLES = {
+  dashboard:["总览看板","分类分布、覆盖情况与使用情况"],
+  skills:["Skill 库","检索、筛选、标注与批量整理"],
+  categories:["分类体系","定义分类与关键词规则，重新自动归类"],
+  data:["导入 / 导出","扫描目录、导入导出与本地数据管理"],
+  sync:["云同步","飞书多维表格多端同步"]
+};
+function setView(v){
+  state.ui.view = v;
+  render();
+}
+function render(){
+  const v = state.ui.view;
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active", b.dataset.view===v));
+  document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active", b.dataset.tab===v));
+  const fab = document.getElementById("fabAdd");
+  if(fab) fab.classList.toggle("show", (v==="dashboard" || v==="skills") && state.skills.length > 0);
+  document.getElementById("pageTitle").textContent = TITLES[v][0];
+  document.getElementById("pageCrumb").textContent = TITLES[v][1];
+  document.getElementById("badgeTotal").textContent = state.skills.length;
+  document.getElementById("badgeCats").textContent = state.cats.length;
+  const root = document.getElementById("viewRoot");
+  if(v==="dashboard") root.innerHTML = renderDashboard();
+  else if(v==="skills") root.innerHTML = renderSkills();
+  else if(v==="categories") root.innerHTML = renderCategories();
+  else if(v==="sync") root.innerHTML = renderSync();
+  else root.innerHTML = renderData();
+  const tc = root.querySelector("#tipClose");
+  if(tc) tc.onclick = ()=>{ try{ localStorage.setItem("skilllens.tip","off"); }catch(e){} render(); };
+  const bs = document.getElementById("badgeSync");
+  if(bs) bs.textContent = syncBadge();
+  if(v!=="skills") state.ui.selected = [];
+  const h = JSON.stringify({ s: state.skills, c: state.cats });
+  if(h !== state._hash){ state._hash = h; saveState(); }
+}
+
+function stats(){
+  const total = state.skills.length;
+  const enabled = state.skills.filter(s=>s.enabled).length;
+  const manual = state.skills.filter(s=>s.manual).length;
+  const other = state.skills.filter(s=>s.category==="other").length;
+  const usage = state.skills.reduce((a,s)=>a+(s.usage||0),0);
+  const usedCats = new Set(state.skills.map(s=>s.category)).size;
+  const tags = {};
+  state.skills.forEach(s=>(s.tags||[]).forEach(t=>{ tags[t]=(tags[t]||0)+1; }));
+  const sources = {};
+  state.skills.forEach(s=>{ sources[s.source]=(sources[s.source]||0)+1; });
+  const favorite = state.skills.filter(s=>s.favorite).length;
+  const logCount = state.skills.reduce((a,s)=>a+((s.logs||[]).length),0);
+  return {total, enabled, manual, other, usage, usedCats, tags, sources, favorite, logCount};
+}
+
+/* ================= 看板 ================= */
+function mobileTip(){
+  try{ if(localStorage.getItem("skilllens.tip")==="off") return ""; }catch(e){}
+  return `<section class="card app-tip" style="margin-bottom:12px;border-color:#e2e8f0">
+  <div class="pad" style="padding:14px 16px">
+    <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:650">手机版已适配 <span class="chip" style="background:var(--accent-soft);border-color:#cdece7;color:var(--accent)">底部导航</span></div>
+    <div class="small muted" style="margin-top:6px;line-height:1.75">
+      想当 App 用：iPhone 用 Safari 打开 → 分享 → 「添加到主屏幕」；安卓 Chrome → 右上 ⋮ → 「添加到主屏幕 / 安装应用」。<br>
+      数据与电脑端走同一个飞书多维表格，在「同步」页填一次中转地址即可两端一致。
+    </div>
+    <div style="margin-top:10px;text-align:right"><button class="btn sm" id="tipClose">知道了</button></div>
+  </div>
+</section>`;
+}
+function renderDashboard(){
+  const st = stats();
+  const catCounts = state.cats.map(c=>({...c, n: state.skills.filter(s=>s.category===c.id).length}));
+  const maxCat = Math.max(1, ...catCounts.map(c=>c.n));
+  const srcMap = {builtin:"内置技能", user:"用户技能", github:"GitHub 导入", import:"扫描导入", manual:"手动新增"};
+  const srcColors = {builtin:"#0f766e", user:"#0891b2", github:"#2563eb", import:"#b45309", manual:"#64748b"};
+  const srcList = Object.keys(st.sources).map(k=>({k, n: st.sources[k], label: srcMap[k]||k, color: srcColors[k]||"#64748b"}));
+  const topTags = Object.entries(st.tags).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const maxTag = Math.max(1, ...topTags.map(t=>t[1]));
+  const topUse = state.skills.filter(s=>s.usage>0).sort((a,b)=>b.usage-a.usage).slice(0,6);
+  const favs = state.skills.filter(s=>s.favorite);
+  const recentLogs = state.skills
+    .flatMap(s=>(s.logs||[]).map(l=>({t:l.t, note:l.note||"", skill:s})))
+    .sort((a,b)=>new Date(b.t)-new Date(a.t)).slice(0,8);
+  const dupes = findSimilar();
+
+  const donut = (()=>{
+    const total = srcList.reduce((a,b)=>a+b.n,0)||1;
+    let acc = 0; const r=54, cx=66, cy=66, C=2*Math.PI*r;
+    const segs = srcList.map(x=>{
+      const frac = x.n/total, dash = frac*C;
+      const seg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${x.color}" stroke-width="16" stroke-dasharray="${dash} ${C-dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="butt"></circle>`;
+      acc += dash; return seg;
+    }).join("");
+    return `<svg viewBox="0 0 132 132">
+      <circle cx="66" cy="66" r="54" fill="none" stroke="#f1f5f9" stroke-width="16"></circle>${segs}
+      <text x="66" y="63" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">${total}</text>
+      <text x="66" y="79" text-anchor="middle" font-size="10" fill="#94a3b8">SKILLS</text>
+    </svg>`;
+  })();
+
+  if(st.total === 0){
+    return mobileTip() + `<section class="card" style="border-color:#bbf7d0;background:#f6fffa">
+      <div class="pad" style="padding:34px 26px;text-align:center">
+        <div style="width:46px;height:46px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:24px;display:grid;place-items:center;margin:0 auto">＋</div>
+        <h2 style="margin:10px 0 6px;font-size:18px">库是空的，从你今天真正用得顺手的那个开始</h2>
+        <div class="muted" style="font-size:13px;max-width:560px;margin:0 auto 20px;line-height:1.8">
+          不需要一次录满。用到哪个记哪个：名字 + 一句话描述即可，分类和标签会自动推荐，
+          之后可以打星、收藏、写上“这次用它做了什么”。<br>已经有数据的话，也可以直接导入或从目录扫描。
+        </div>
+        <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" onclick="openAdd()">＋ 添加第一个 Skill</button>
+          <button class="btn" onclick="document.getElementById('dirInput').click()">⇪ 扫描 skill 目录</button>
+          <button class="btn" onclick="setView('data')">⇅ 导入已有数据</button>
+        </div>
+      </div>
+    </section>
+    ${kpiRowEmpty()}`;
+  }
+  return mobileTip() + `
+  <div class="kpis">
+    ${kpi("技能总数", st.total, "内置 " + (st.sources.builtin||0) + " · 用户 " + (st.sources.user||0) + " · 手动 " + (st.manual||0), 100)}
+    ${kpi("已收藏", st.favorite, "使用记录 " + st.logCount + " 条", st.total? st.favorite/st.total*100:0)}
+    ${kpi("分类覆盖", st.usedCats + " / " + state.cats.length, "人工标注 " + st.manual + " 个", state.cats.length? st.usedCats/state.cats.length*100:0)}
+    ${kpi("累计使用", st.usage, "待归类 " + st.other + " 个", st.total? (st.total-st.other)/st.total*100:0)}
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.5fr 1fr">
+    <section class="card">
+      <div class="card-h"><h2>分类分布</h2><span class="sub">点击分类跳转筛选</span><span class="sp small muted">共 ${state.cats.length} 类</span></div>
+      <div class="pad">
+        <div class="bars">
+          ${catCounts.map(c=>`
+            <div class="bar-row" data-jumpcat="${c.id}" style="cursor:pointer">
+              <div class="nm"><i class="dot" style="background:${c.color}"></i><span>${esc(c.name)}</span></div>
+              <div class="track"><div class="fill" style="width:${(c.n/maxCat*100).toFixed(1)}%;background:${c.color};opacity:${c.n?1:.25}"></div></div>
+              <div class="num">${c.n}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>来源分布</h2><span class="sub">数据入口</span></div>
+      <div class="pad">
+        <div class="donut">
+          ${donut}
+          <div style="flex:1">
+            <legend>
+              ${srcList.map(x=>`<div class="li"><i class="dot" style="background:${x.color}"></i><span>${esc(x.label)}</span><span class="v">${x.n}</span></div>`).join("")}
+            </legend>
+            <div class="small muted" style="margin-top:10px;line-height:1.6">内置技能来自当前环境 skill 目录快照；扫描目录或导入后可覆盖更新。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+    <section class="card">
+      <div class="card-h"><h2>标签热度</h2><span class="sub">Top ${topTags.length}</span></div>
+      <div class="pad">
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${topTags.length? topTags.map(t=>`
+            <span class="chip click" data-jumptag="${esc(t[0])}" style="gap:6px">
+              ${esc(t[0])} <b style="color:var(--ink-3);font-weight:600">${t[1]}</b>
+            </span>`).join("") : '<span class="muted small">暂无标签</span>'}
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>使用排行</h2><span class="sub">手动“使用 +1”累计</span></div>
+      <div class="pad">
+        ${!topUse.length? '<div class="muted small">还没有使用记录。在 Skill 库里点 ＋1，或在详情里记一条使用，这里就会开始统计。</div>' : `<div class="bars">
+          ${topUse.map(s=>`<div class="bar-row" data-open="${s.id}" style="cursor:pointer;grid-template-columns:150px 1fr 38px">
+            <div class="nm mono">${esc(s.name)}</div>
+            <div class="track"><div class="fill" style="width:${(s.usage/Math.max(1,topUse[0].usage)*100).toFixed(1)}%;background:${catOf(s.category).color}"></div></div>
+            <div class="num">${s.usage}</div></div>`).join("")}
+        </div>`}
+      </div>
+    </section>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+    <section class="card">
+      <div class="card-h"><h2>我的收藏</h2><span class="sub">最常用、最顺手的几个</span>
+        <span class="sp small muted">${favs.length} 个</span></div>
+      <div class="pad">
+        ${favs.length? `<div style="display:flex;flex-direction:column;gap:9px">
+          ${favs.map(s=>`<div style="display:flex;align-items:center;gap:9px;font-size:12.5px;cursor:pointer" data-open="${s.id}">
+            <span style="color:#dc2626">♥</span>
+            <span class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span>
+            ${s.rating?starsHTML(s.rating,11):""}
+            <span class="muted small">用 ${s.usage} 次</span>
+          </div>`).join("")}
+        </div>` : '<div class="muted small">还没有收藏。在 Skill 库点 ♡ 或详情里勾选“收藏（常用）”，这里就会变成你的常用清单。</div>'}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>最近使用记录</h2><span class="sub">每次用过记一条，日后好回忆</span></div>
+      <div class="pad">
+        ${recentLogs.length? `<div style="display:flex;flex-direction:column;gap:10px">
+          ${recentLogs.map(l=>`<div style="font-size:12.5px;cursor:pointer;border-left:2px solid var(--accent);padding-left:9px" data-open="${l.skill.id}">
+            <div class="row" style="justify-content:space-between;gap:8px">
+              <span class="mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%">${esc(l.skill.name)}</span>
+              <span class="muted small">${fmtDate(l.t)}</span>
+            </div>
+            ${l.note?`<div class="muted" style="margin-top:2px">${esc(l.note)}</div>`:""}
+          </div>`).join("")}
+        </div>` : '<div class="muted small">还没有使用记录。在 Skill 库点 ＋1，或在详情里写一条“这次用它做了什么”。</div>'}
+      </div>
+    </section>
+  </div>
+
+  ${st.other? `<section class="card" style="margin-top:14px;border-color:#fde68a;background:#fffdf5">
+      <div class="card-h"><h2>待归类 ${st.other} 个</h2><span class="sub">自动规则没命中，建议人工确认</span>
+        <span class="sp"><button class="btn sm" data-jumpcat="other">去处理 →</button></span></div>
+      <div class="pad"><div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${state.skills.filter(s=>s.category==="other").slice(0,24).map(s=>`<span class="chip click mono" data-open="${s.id}">${esc(s.name)}</span>`).join("")}
+        ${st.other>24?`<span class="chip">+${st.other-24}</span>`:""}
+      </div></div>
+    </section>` : ""}
+  `;
+}
+function kpiRowEmpty(){
+  return `<div class="kpis" style="margin-top:16px">
+    ${kpi("技能总数", 0, "还没开始记录", 0)}
+    ${kpi("已收藏", 0, "收藏 = 常用清单", 0)}
+    ${kpi("分类覆盖", "0 / " + state.cats.length, "分类已就绪，随时可用", 0)}
+    ${kpi("累计使用", 0, "每用一次点一下 ＋1", 0)}
+  </div>
+  <section class="card" style="margin-top:14px">
+    <div class="card-h"><h2>怎么开始比较省事</h2><span class="sub">三条路，选一条就够</span></div>
+    <div class="pad howto" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="mini-stat"><div class="k">① 随手记</div><div style="margin-top:6px;font-size:12.5px;color:var(--ink-2);line-height:1.7">用到某个 Skill 觉得顺手，就新增一条：名字 + 一句话用途。</div></div>
+      <div class="mini-stat"><div class="k">② 扫目录</div><div style="margin-top:6px;font-size:12.5px;color:var(--ink-2);line-height:1.7">电脑上选一次 skill 目录，自动把本机所有技能读进来，再删掉不常用的。</div></div>
+      <div class="mini-stat"><div class="k">③ 导入备份</div><div style="margin-top:6px;font-size:12.5px;color:var(--ink-2);line-height:1.7">之前导出过 JSON，直接导入即可恢复，分类与记录一起回来。</div></div>
+    </div>
+  </section>`;
+}
+function kpi(lab, val, hint, pct){
+  return `<div class="kpi"><div class="lab">${lab}</div><div class="val">${val}</div><div class="hint">${hint}</div>
+    <div class="bar-line"><i style="width:${Math.max(0,Math.min(100,pct||0)).toFixed(0)}%"></i></div></div>`;
+}
+
+/* 相似度：描述字符二元组 Jaccard */
+function grams(s){
+  const t = String(s||"").replace(/[\s\p{P}]/gu,"").toLowerCase();
+  const g=[]; for(let i=0;i<t.length-1;i++) g.push(t.slice(i,i+2));
+  return new Set(g);
+}
+function findSimilar(){
+  const pairs = [];
+  const arr = state.skills.filter(s=>s.desc && s.desc.length>12);
+  for(let i=0;i<arr.length;i++){
+    const ga = grams(arr[i].desc);
+    if(!ga.size) continue;
+    for(let j=i+1;j<arr.length;j++){
+      const gb = grams(arr[j].desc); if(!gb.size) continue;
+      let inter=0; ga.forEach(x=>{ if(gb.has(x)) inter++; });
+      const uni = ga.size + gb.size - inter;
+      const sc = uni? inter/uni : 0;
+      if(sc>=0.55) pairs.push({a:arr[i], b:arr[j], score:sc});
+    }
+  }
+  return pairs.sort((x,y)=>y.score-x.score).slice(0,8);
+}
+
+/* ================= Skill 库 ================= */
+function filteredSkills(){
+  const u = state.ui, q = norm(u.q).trim();
+  let list = state.skills.filter(s=>{
+    if(u.cat!=="all" && s.category!==u.cat) return false;
+    if(u.src!=="all" && s.source!==u.src) return false;
+    if(u.status==="on" && !s.enabled) return false;
+    if(u.status==="off" && s.enabled) return false;
+    if(u.minStar && s.rating<u.minStar) return false;
+    if(u.fav==="only" && !s.favorite) return false;
+    if(u.tag!=="all" && !(s.tags||[]).includes(u.tag)) return false;
+    if(q){
+      const hay = norm(s.name+" "+s.desc+" "+(s.tags||[]).join(" ")+" "+s.note+" "+s.path);
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const sorters = {
+    name:(a,b)=>a.name.localeCompare(b.name),
+    usage:(a,b)=>b.usage-a.usage,
+    rating:(a,b)=>b.rating-a.rating,
+    cat:(a,b)=>catOf(a.category).name.localeCompare(catOf(b.category).name) || a.name.localeCompare(b.name),
+    recent:(a,b)=>new Date(b.lastUsed||0)-new Date(a.lastUsed||0),
+    added:(a,b)=>new Date(b.createdAt)-new Date(a.createdAt)
+  };
+  return list.sort(sorters[u.sort]||sorters.name);
+}
+
+function starsHTML(n, size){
+  let s=""; for(let i=1;i<=5;i++) s += `<span style="${i<=n?"":"opacity:.25"}">★</span>`;
+  return `<span class="stars" style="font-size:${size||12}px">${s}</span>`;
+}
+function shortDesc(d){
+  const t = String(d||"").replace(/\s+/g," ").trim();
+  if(!t) return "（无描述，点开补充）";
+  return t.length > 110 ? t.slice(0,110) + "…" : t;
+}
+function catChip(id){
+  const c = catOf(id);
+  return `<span class="chip" style="background:${c.color}14;color:${c.color};border-color:${c.color}33"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}</span>`;
+}
+
+function renderSkills(){
+  const u = state.ui, list = filteredSkills();
+  const allTags = Object.keys(stats().tags).sort();
+  const catOpts = state.cats.map(c=>`<option value="${c.id}" ${u.cat===c.id?"selected":""}>${esc(c.name)}</option>`).join("");
+  const selAll = list.length && list.every(s=>u.selected.includes(s.id));
+  return `
+  <section class="card">
+    <div class="toolbar">
+      <label class="search">⌕ <input id="q" placeholder="搜索名称、描述、标签、备注、路径…" value="${esc(u.q)}"></label>
+      <div class="fstrip">
+      <select class="sel" id="fCat"><option value="all" ${u.cat==="all"?"selected":""}>全部分类</option>${catOpts}</select>
+      <select class="sel" id="fSrc">
+        ${[["all","全部来源"],["builtin","内置"],["user","用户技能"],["github","GitHub 导入"],["import","扫描导入"],["manual","手动新增"]].map(x=>`<option value="${x[0]}" ${u.src===x[0]?"selected":""}>${x[1]}</option>`).join("")}
+      </select>
+      <select class="sel" id="fStatus">
+        ${[["all","全部状态"],["on","已启用"],["off","已停用"]].map(x=>`<option value="${x[0]}" ${u.status===x[0]?"selected":""}>${x[1]}</option>`).join("")}
+      </select>
+      <select class="sel" id="fTag"><option value="all" ${u.tag==="all"?"selected":""}>全部标签</option>${allTags.map(t=>`<option ${u.tag===t?"selected":""}>${esc(t)}</option>`).join("")}</select>
+      <select class="sel" id="fFav">
+        ${[["all","全部收藏状态"],["only","只看收藏 ♥"]].map(x=>`<option value="${x[0]}" ${u.fav===x[0]?"selected":""}>${x[1]}</option>`).join("")}
+      </select>
+      <select class="sel" id="fStar">
+        ${[[0,"全部评分"],[1,"≥1 星"],[3,"≥3 星"],[4,"≥4 星"]].map(x=>`<option value="${x[0]}" ${u.minStar===x[0]?"selected":""}>${x[1]}</option>`).join("")}
+      </select>
+      <select class="sel" id="fSort">
+        ${[["name","按名称"],["usage","按使用次数"],["rating","按评分"],["cat","按分类"],["recent","按最近使用"],["added","按添加时间"]].map(x=>`<option value="${x[0]}" ${u.sort===x[0]?"selected":""}>${x[1]}</option>`).join("")}
+      </select>
+      </div>
+    </div>
+    <div class="batch">
+      <input type="checkbox" id="selAll" ${selAll?"checked":""} style="accent-color:var(--accent)">
+      <span>共 <b>${list.length}</b> 个${u.selected.length?`，已选 <b>${u.selected.length}</b>`:""}</span>
+      <span style="flex:1"></span>
+      <select class="sel" id="batchCat" ${u.selected.length?"":"disabled"}>
+        <option value="">批量设分类…</option>
+        ${state.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}
+      </select>
+      <button class="btn sm" data-batch="on" ${u.selected.length?"":"disabled"}>启用</button>
+      <button class="btn sm" data-batch="off" ${u.selected.length?"":"disabled"}>停用</button>
+      <button class="btn sm danger" data-batch="del" ${u.selected.length?"":"disabled"}>删除</button>
+    </div>
+    <div class="skill-list">
+      ${list.length? list.map(s=>skillRow(s)).join("") : `<div class="empty">没有匹配的 Skill<div class="small" style="margin-top:6px">换个关键词，或清空筛选条件</div></div>`}
+    </div>
+  </section>`;
+}
+
+function skillRow(s){
+  const c = catOf(s.category);
+  const tags = (s.tags||[]).slice(0,4).map(t=>`<span class="chip" style="font-size:11px">#${esc(t)}</span>`).join("");
+  return `<div class="skill ${s.enabled?"":"off"}" data-id="${s.id}">
+    <input type="checkbox" class="ck" data-ck="${s.id}" ${state.ui.selected.includes(s.id)?"checked":""}>
+    <div class="body" data-open="${s.id}">
+      <div class="line1">
+        <span class="name">${esc(s.name)}</span>
+        ${catChip(s.category)}
+        ${s.manual?`<span class="chip" style="font-size:10.5px;background:#fff7ed;color:#b45309;border-color:#fed7aa">人工</span>`:""}
+        ${s.enabled?"":`<span class="chip" style="font-size:10.5px;background:#f1f5f9;color:#64748b">已停用</span>`}
+      </div>
+      <div class="desc">${esc(shortDesc(s.desc))}</div>
+      <div class="meta">
+        ${tags}
+        <span>${s.source==="builtin"?"内置":s.source==="user"?"用户":s.source==="github"?"GitHub":s.source==="import"?"导入":"手动"}</span>
+        <span>·</span><span>使用 ${s.usage}</span>
+        ${s.rating?`<span>·</span>${starsHTML(s.rating,11)}`:""}
+        ${(s.logs&&s.logs.length)?`<span>·</span><span style="color:var(--accent)">记录 ${s.logs.length} 条</span>`:""}
+        ${s.note?`<span>·</span><span style="color:#b45309">备注 ${esc(s.note.slice(0,18))}${s.note.length>18?"…":""}</span>`:""}
+      </div>
+    </div>
+    <div class="acts">
+      <button class="icon-btn" data-fav="${s.id}" title="收藏 / 取消收藏" style="color:${s.favorite?"#dc2626":"var(--ink-3)"}">${s.favorite?"♥":"♡"}</button>
+      <button class="icon-btn" data-use="${s.id}" title="使用次数 +1">＋1</button>
+      <button class="icon-btn" data-star="${s.id}" title="好评 +1">★</button>
+      <button class="icon-btn" data-toggle="${s.id}" title="启用/停用">${s.enabled?"◉":"○"}</button>
+      <button class="icon-btn" data-open="${s.id}" title="详情">⋯</button>
+    </div>
+  </div>`;
+}
+
+/* ================= 分类体系 ================= */
+function renderCategories(){
+  const counts = {};
+  state.skills.forEach(s=>{ counts[s.category]=(counts[s.category]||0)+1; });
+  return `
+  <section class="card">
+    <div class="card-h">
+      <h2>分类与关键词规则</h2>
+      <span class="sub">强信号词加权：名称命中权重最高，描述命中按次数累计，取总分最高者</span>
+      <span class="sp row">
+        <button class="btn sm" data-reclass="auto">重新自动归类</button>
+        <button class="btn sm" data-reclass="all">全部重算</button>
+        <button class="btn sm primary" data-addcat="1">＋ 新分类</button>
+      </span>
+    </div>
+    <div class="pad" style="padding-top:12px;overflow:auto">
+      <table class="tbl">
+        <thead><tr>
+          <th style="width:44px">颜色</th><th style="width:150px">分类名称</th><th style="width:60px">数量</th>
+          <th>关键词（逗号分隔）</th><th style="width:70px">操作</th>
+        </tr></thead>
+        <tbody>
+        ${state.cats.map(c=>`<tr>
+          <td><input type="color" value="${c.color}" data-catcolor="${c.id}"></td>
+          <td><input type="text" value="${esc(c.name)}" data-catname="${c.id}"></td>
+          <td><b>${counts[c.id]||0}</b></td>
+          <td><input type="text" value="${esc((c.kw||[]).join("，"))}" data-catkw="${c.id}" placeholder="用逗号分隔，可留空"></td>
+          <td>${c.id==="other"?`<span class="small muted">兜底</span>`:`<button class="btn sm danger" data-delcat="${c.id}">删除</button>`}</td>
+        </tr>`).join("")}
+        </tbody>
+      </table>
+      <div class="small muted" style="margin-top:10px;line-height:1.7">
+        提示：修改关键词后点“重新自动归类”，会重算所有<b>未被人工指定分类</b>的 Skill；“全部重算”会覆盖人工标注，谨慎使用。
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ================= 导入 / 导出 ================= */
+function renderData(){
+  const st = stats();
+  let bytes = 0;
+  try{ bytes = (localStorage.getItem(LS_KEY)||"").length; }catch(e){}
+  return `
+  <section class="card" style="margin-bottom:14px">
+    <div class="card-h"><h2>从 GitHub 链接导入</h2><span class="sub">仓库 / 子目录 / 单个 SKILL.md / Gist 都支持</span></div>
+    <div class="pad">
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <label class="search" style="flex:1;min-width:240px">⌘
+          <input id="ghUrl" placeholder="粘贴链接，例如 https://github.com/owner/repo/tree/main/skills" value="${esc(state.ui.ghUrl||"")}">
+        </label>
+        <button class="btn primary" data-ghimport="1">解析并导入</button>
+      </div>
+      <div id="ghResult" class="small muted" style="margin-top:10px;line-height:1.8">${state.ui.ghResult || "支持：仓库首页、具体子目录（tree）、单个 SKILL.md（blob / raw）、Gist 链接。只导入 SKILL.md 及其 name / description，重复项会跳过。"}</div>
+    </div>
+  </section>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr">
+    <section class="card">
+      <div class="card-h"><h2>扫描本地 skill 目录</h2><span class="sub">读取目录下所有 SKILL.md 的 name / description</span></div>
+      <div class="pad">
+        <div class="drop" id="dropDir">
+          <b>点击选择 skill 根目录</b>
+          例如 .skills / .user_skills / 任意含 SKILL.md 的文件夹<br>
+          <span class="small muted">支持递归扫描；同名 Skill 会更新描述，保留你的标注与使用记录</span>
+        </div>
+        <div class="small muted" style="margin-top:10px;line-height:1.7">
+          · 需要 Chrome / Edge 等支持目录选择的浏览器；若在手机或受限环境打不开选择框，请改用下方 JSON 导入。<br>
+          · 纯前端读取，文件不会离开本机。
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>导入 / 导出</h2><span class="sub">JSON 便于备份迁移，CSV 便于表格查看</span></div>
+      <div class="pad">
+        <div class="row" style="flex-wrap:wrap;gap:8px">
+          <button class="btn" data-imp="json">导入 JSON</button>
+          <button class="btn" data-imp="csv">导入 CSV</button>
+          <span style="flex:1"></span>
+          <button class="btn" data-exp="json">导出 JSON</button>
+          <button class="btn" data-exp="csv">导出 CSV</button>
+        </div>
+        <div style="margin-top:14px" class="kv">
+          <div class="mini-stat"><div class="k">本地占用</div><div class="v">${(bytes/1024).toFixed(1)} KB</div></div>
+          <div class="mini-stat"><div class="k">记录数</div><div class="v">${state.skills.length}</div></div>
+        </div>
+        <div class="small muted" style="margin-top:10px">导出 JSON 会同时带上分类体系配置，换机器导入后可完整还原。</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+    <section class="card">
+      <div class="card-h"><h2>手动粘贴 SKILL.md</h2><span class="sub">含 frontmatter 的文本直接识别</span></div>
+      <div class="pad">
+        <div class="field" style="margin-bottom:10px">
+          <textarea id="pasteMd" placeholder="---&#10;name: my-skill&#10;description: 这个技能用于……&#10;---"></textarea>
+        </div>
+        <button class="btn primary" data-imp="paste">解析并添加</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>本地数据管理</h2><span class="sub">本地浏览器缓存，可同步到飞书</span></div>
+      <div class="pad">
+        <div class="small" style="line-height:1.8;color:var(--ink-2)">
+          当前共有 <b>${state.skills.length}</b> 个 Skill、<b>${st.favorite}</b> 个收藏、<b>${st.logCount}</b> 条使用记录。<br>
+          只想留自己常用的：先给常用的点 ♥ 收藏，再点“仅保留收藏项”，目录快照就清干净了。<br>
+          未配置同步时数据只在当前浏览器；换浏览器、清缓存前建议导出 JSON 备份。
+        </div>
+        <div class="row" style="margin-top:14px;flex-wrap:wrap">
+          <button class="btn danger" data-reset="empty">清空全部 Skill</button>
+          <button class="btn" data-reset="keepfav">仅保留收藏项</button>
+          <button class="btn" data-reset="seed">恢复内置种子数据</button>
+          <button class="btn danger" data-reset="clear">清空全部数据</button>
+        </div>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ================= 详情 / 编辑抽屉 ================= */
+let sheetMode = "detail"; // detail | add
+function openSheet(id){
+  const s = state.skills.find(x=>x.id===id);
+  if(!s) return;
+  sheetMode = "detail";
+  document.getElementById("sheetTitle").textContent = s.name;
+  document.getElementById("sheetSub").innerHTML = catChip(s.category) + ` <span class="mono">${esc(s.source)}</span>`;
+  document.getElementById("sheetBody").innerHTML = `
+    <div class="kv" style="margin-bottom:16px">
+      <div class="mini-stat"><div class="k">使用次数</div><div class="v">${s.usage}</div></div>
+      <div class="mini-stat"><div class="k">最近使用</div><div class="v" style="font-size:12px;font-weight:500;color:var(--ink-2)">${fmtDate(s.lastUsed)}</div></div>
+    </div>
+    <div class="field">
+      <label>名称</label>
+      <input type="text" id="eName" value="${esc(s.name)}">
+    </div>
+    <div class="field">
+      <label>描述</label>
+      <textarea id="eDesc" style="min-height:120px">${esc(s.desc)}</textarea>
+    </div>
+    <div class="field">
+      <label>分类 ${s.manual?'<span style="color:#b45309">（人工指定）</span>':''}</label>
+      <select id="eCat">
+        ${state.cats.map(c=>`<option value="${c.id}" ${s.category===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
+      </select>
+      <div class="hint">改动后标记为人工分类，不再被自动规则覆盖。</div>
+    </div>
+    <div class="field">
+      <label>标签（逗号或空格分隔）</label>
+      <input type="text" id="eTags" value="${esc((s.tags||[]).join("，"))}">
+    </div>
+    <div class="field">
+      <label>评分（好用程度）</label>
+      <div class="star-pick" id="eStars">${[1,2,3,4,5].map(i=>`<span class="${i<=s.rating?"on":""}" data-setstar="${i}">★</span>`).join("")}</div>
+    </div>
+    <div class="field">
+      <label>使用记录 <span style="color:var(--ink-3)">（这次用它做了什么）</span></label>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <input type="text" id="eLogNote" placeholder="例：用它整理周报，5 分钟搞定 / 合同批注很准">
+        <button class="btn sm primary" id="eLogAdd" style="white-space:nowrap">记一条</button>
+      </div>
+      <div id="eLogList" style="display:flex;flex-direction:column;gap:6px;max-height:150px;overflow:auto">
+        ${(s.logs||[]).length? s.logs.map((l,i)=>`<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;background:#f8fafc;border:1px solid var(--line-2);border-radius:8px;padding:6px 9px">
+          <span class="muted small" style="white-space:nowrap">${fmtDate(l.t).slice(5)}</span>
+          <span style="flex:1;color:var(--ink-2)">${esc(l.note)||'<i class="muted">（未填内容）</i>'}</span>
+          <button class="icon-btn" data-dellog="${i}" style="padding:0 4px">×</button>
+        </div>`).join("") : '<div class="small muted">还没有记录。</div>'}
+      </div>
+    </div>
+    <div class="field">
+      <label>备注</label>
+      <textarea id="eNote" placeholder="适用场景、坑、替代方案…">${esc(s.note)}</textarea>
+    </div>
+    <div class="field">
+      <label>SKILL.md 路径</label>
+      <div class="path-box">
+        <input type="text" id="ePath" value="${esc(s.path)}">
+        <button class="btn sm" id="eCopy">复制</button>
+      </div>
+    </div>
+    <div class="field row" style="justify-content:space-between">
+      <span class="row" style="gap:14px">
+        <span class="switch"><input type="checkbox" id="eEnabled" ${s.enabled?"checked":""}> 启用</span>
+        <span class="switch"><input type="checkbox" id="eFav" ${s.favorite?"checked":""}> 收藏（常用）</span>
+      </span>
+      <span class="small muted">添加于 ${fmtDate(s.createdAt)}</span>
+    </div>
+    <div class="row" style="gap:8px;margin-top:20px">
+      <button class="btn primary" id="eSave">保存修改</button>
+      <button class="btn" id="eUse">使用 +1</button>
+      <span style="flex:1"></span>
+      <button class="btn danger" id="eDel">删除</button>
+    </div>`;
+
+  document.getElementById("eCopy").onclick = ()=> copyText(document.getElementById("ePath").value);
+  document.getElementById("eStars").onclick = e=>{
+    const t = e.target.closest("[data-setstar]"); if(!t) return;
+    const v = +t.dataset.setstar;
+    document.querySelectorAll("#eStars span").forEach((el,i)=>el.classList.toggle("on", i<v));
+    document.getElementById("eStars").dataset.value = v;
+  };
+  document.getElementById("eStars").dataset.value = s.rating;
+  document.getElementById("eSave").onclick = ()=>{
+    const name = document.getElementById("eName").value.trim() || s.name;
+    s.name = name;
+    s.desc = document.getElementById("eDesc").value.trim();
+    const newCat = document.getElementById("eCat").value;
+    if(newCat !== s.category){ s.category = newCat; s.manual = true; }
+    s.tags = document.getElementById("eTags").value.split(/[，,\s]+/).map(x=>x.trim()).filter(Boolean);
+    s.rating = +document.getElementById("eStars").dataset.value || 0;
+    s.note = document.getElementById("eNote").value.trim();
+    s.path = document.getElementById("ePath").value.trim();
+    s.enabled = document.getElementById("eEnabled").checked;
+    s.favorite = document.getElementById("eFav").checked;
+    s.logs = (s.logs||[]).slice();
+    saveState(); render(); toast("已保存");
+  };
+  document.getElementById("eLogAdd").onclick = ()=>{
+    const inp = document.getElementById("eLogNote");
+    const note = inp.value.trim();
+    const t = new Date().toISOString();
+    (s.logs = s.logs||[]).unshift({t, note});
+    s.usage++; s.lastUsed = t;
+    saveState(); openSheet(s.id); toast("已记录本次使用");
+  };
+  document.getElementById("eLogNote").onkeydown = e=>{ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("eLogAdd").click(); } };
+  document.querySelectorAll("[data-dellog]").forEach(btn=>{
+    btn.onclick = ()=>{
+      if(!confirm("删除这条记录？")) return;
+      s.logs.splice(+btn.dataset.dellog,1); saveState(); openSheet(s.id);
+    };
+  });
+  document.getElementById("eUse").onclick = ()=>{
+    s.usage++; s.lastUsed = new Date().toISOString(); (s.logs=s.logs||[]).unshift({t:s.lastUsed, note:""}); saveState(); openSheet(s.id); toast("使用次数 +1");
+  };
+  document.getElementById("eDel").onclick = ()=>{
+    if(!confirm("确定删除「"+s.name+"」？")) return;
+    state.skills = state.skills.filter(x=>x.id!==s.id);
+    state.ui.selected = state.ui.selected.filter(x=>x!==s.id);
+    closeSheet(); render(); toast("已删除");
+  };
+  showSheet();
+}
+
+function openAdd(){
+  sheetMode = "add";
+  document.getElementById("sheetTitle").textContent = "新增 Skill";
+  document.getElementById("sheetSub").textContent = "填名称和描述，自动推荐分类与标签";
+  document.getElementById("sheetBody").innerHTML = `
+    <div class="field"><label>名称</label><input type="text" id="aName" placeholder="例如 pdf-form-filler"></div>
+    <div class="field"><label>描述 / 触发场景</label><textarea id="aDesc" placeholder="这个 Skill 用来做什么，什么时候应该被调用"></textarea></div>
+    <div class="field"><label>分类（留空则自动）</label>
+      <select id="aCat"><option value="">自动推荐</option>${state.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
+    <div class="field"><label>标签（逗号分隔，留空自动）</label><input type="text" id="aTags"></div>
+    <div class="field"><label>SKILL.md 路径（可选）</label><input type="text" id="aPath" placeholder="/path/to/skill/SKILL.md"></div>
+    <div class="row" style="margin-top:18px;gap:8px">
+      <button class="btn primary" id="aSave">添加</button>
+      <span class="small muted" id="aPreview"></span>
+    </div>`;
+  const refresh = ()=>{
+    const name = document.getElementById("aName").value, desc = document.getElementById("aDesc").value;
+    const c = classify(name, desc);
+    document.getElementById("aPreview").innerHTML = name? `推荐：${catChip(c.cat)} ${autoTags(name,desc).map(t=>`#${esc(t)}`).join(" ")}` : "";
+  };
+  document.getElementById("aName").oninput = refresh;
+  document.getElementById("aDesc").oninput = refresh;
+  document.getElementById("aSave").onclick = ()=>{
+    const name = document.getElementById("aName").value.trim();
+    if(!name){ toast("请填写名称"); return; }
+    const desc = document.getElementById("aDesc").value.trim();
+    const cat = document.getElementById("aCat").value;
+    const tags = document.getElementById("aTags").value.split(/[，,\s]+/).map(x=>x.trim()).filter(Boolean);
+    const s = makeSkill({name, desc, path: document.getElementById("aPath").value.trim(), source:"manual", category: cat||null, manual: !!cat, tags: tags.length?tags:null});
+    state.skills.unshift(s); closeSheet(); render(); toast("已添加「"+name+"」");
+  };
+  showSheet();
+}
+function showSheet(){
+  document.body.classList.add("sheet-open");
+  document.getElementById("overlay").classList.add("on");
+  document.getElementById("sheet").classList.add("on");
+}
+function closeSheet(){
+  document.body.classList.remove("sheet-open");
+  document.getElementById("overlay").classList.remove("on");
+  document.getElementById("sheet").classList.remove("on");
+}
+
+/* ================= 解析与导入 ================= */
+function parseFrontmatter(text){
+  const t = String(text||"").replace(/\r/g,"");
+  if(!t.startsWith("---")) return null;
+  const end = t.indexOf("\n---", 3);
+  if(end<0) return null;
+  const fm = t.slice(3, end).split("\n");
+  const kv = {}; let cur = null;
+  fm.forEach(line=>{
+    const m = line.match(/^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$/);
+    if(m){ cur = m[1]; kv[cur] = m[2]; }
+    else if(cur && line.trim()){ kv[cur] = (kv[cur] + " " + line.trim()).trim(); }
+  });
+  let desc = (kv.description||"").replace(/^[>|]\s?-?\s*/,"").replace(/^["']|["']$/g,"").trim();
+  if(!kv.name && !desc) return null;
+  return { name: (kv.name||"").trim().replace(/^["']|["']$/g,""), desc: desc };
+}
+
+function mergeSkills(items, source){
+  let added = 0, updated = 0;
+  items.forEach(it=>{
+    if(!it || !it.name) return;
+    const exist = state.skills.find(s=>s.name===it.name);
+    if(exist){
+      if(it.desc && it.desc!==exist.desc){ exist.desc = it.desc; updated++; }
+      if(it.path) exist.path = it.path;
+    } else {
+      state.skills.push(makeSkill({name:it.name, desc:it.desc, path:it.path, source: source||"import"}));
+      added++;
+    }
+  });
+  return {added, updated};
+}
+
+async function scanFiles(fileList){
+  const files = Array.from(fileList).filter(f=>/SKILL\.md$/i.test(f.name));
+  if(!files.length){ toast("没有找到 SKILL.md 文件"); return; }
+  const items = [];
+  for(const f of files){
+    try{
+      const text = await f.text();
+      const fm = parseFrontmatter(text);
+      if(fm && fm.name){
+        const rel = (f.webkitRelativePath||f.name).split("/");
+        items.push({ name: fm.name, desc: fm.desc, path: rel.join("/") });
+      }
+    }catch(e){}
+  }
+  const r = mergeSkills(items, "import");
+  render();
+  toast(`扫描 ${files.length} 个 SKILL.md：新增 ${r.added}，更新 ${r.updated}`);
+}
+
+function toCSV(){
+  const head = ["name","category","category_name","tags","source","enabled","favorite","rating","usage","lastUsed","note","path","desc"];
+  const q = v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const rows = state.skills.map(s=>[
+    s.name, s.category, catOf(s.category).name, (s.tags||[]).join("|"), s.source,
+    s.enabled?1:0, s.favorite?1:0, s.rating, s.usage, s.lastUsed||"", s.note, s.path, s.desc
+  ].map(q).join(","));
+  return "\ufeff" + head.join(",") + "\n" + rows.join("\n");
+}
+function fromCSV(text){
+  const rows = [];
+  let row = [], cell = "", inQ = false;
+  const t = text.replace(/\ufeff/g,"").replace(/\r/g,"");
+  for(let i=0;i<t.length;i++){
+    const ch = t[i];
+    if(inQ){
+      if(ch === '"' && t[i+1] === '"'){ cell += '"'; i++; }
+      else if(ch === '"') inQ = false;
+      else cell += ch;
+    } else {
+      if(ch === '"') inQ = true;
+      else if(ch === ","){ row.push(cell); cell=""; }
+      else if(ch === "\n"){ row.push(cell); rows.push(row); row=[]; cell=""; }
+      else cell += ch;
+    }
+  }
+  if(cell.length || row.length){ row.push(cell); rows.push(row); }
+  if(!rows.length) return [];
+  const head = rows.shift().map(h=>h.trim());
+  return rows.filter(r=>r.some(x=>x.trim())).map(r=>{
+    const o = {}; head.forEach((h,i)=>o[h]= (r[i]||""));
+    return {
+      name:o.name, desc:o.desc, path:o.path,
+      category:o.category||undefined,
+      manual: !!o.category,
+      tags: o.tags? o.tags.split("|").map(x=>x.trim()).filter(Boolean): undefined,
+      enabled: o.enabled? o.enabled!=="0" : true,
+      favorite: o.favorite==="1" || o.favorite==="true",
+      rating: +o.rating || 0, usage: +o.usage || 0, lastUsed: o.lastUsed || null,
+      note:o.note || ""
+    };
+  });
+}
+
+function download(name, text, type){
+  const blob = new Blob([text], {type: type||"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+function exportJSON(){
+  const payload = { app:"SkillLens", version:1, exportedAt:new Date().toISOString(), cats:state.cats, skills:state.skills };
+  download("skills-"+new Date().toISOString().slice(0,10)+".json", JSON.stringify(payload, null, 2), "application/json");
+  toast("已导出 JSON");
+}
+function exportCSV(){
+  download("skills-"+new Date().toISOString().slice(0,10)+".csv", toCSV(), "text/csv;charset=utf-8");
+  toast("已导出 CSV");
+}
+function importJSON(text){
+  let d;
+  try{ d = JSON.parse(text); }catch(e){ toast("JSON 解析失败"); return; }
+  let skills = [], cats = null;
+  if(Array.isArray(d)) skills = d;
+  else if(d && Array.isArray(d.skills)){ skills = d.skills; cats = d.cats||null; }
+  else { toast("未识别的 JSON 结构"); return; }
+  if(cats && Array.isArray(cats) && cats.length) state.cats = cats;
+  const exist = new Map(state.skills.map(s=>[s.name, s]));
+  let added=0, updated=0;
+  skills.forEach(it=>{
+    if(!it || !it.name) return;
+    const e = exist.get(it.name);
+    if(e){
+      ["desc","path","category","tags","enabled","favorite","rating","note","usage","logs","lastUsed","manual","source"].forEach(k=>{
+        if(it[k]!==undefined) e[k]=it[k];
+      });
+      updated++;
+    } else {
+      state.skills.push(makeSkill(it)); added++;
+    }
+  });
+  render();
+  toast(`导入完成：新增 ${added}，更新 ${updated}`);
+}
+
+/* ================= 批量与事件 ================= */
+function batchAction(kind){
+  const ids = state.ui.selected;
+  if(!ids.length) return;
+  if(kind==="del"){
+    if(!confirm(`确定删除选中的 ${ids.length} 个 Skill？`)) return;
+    state.skills = state.skills.filter(s=>!ids.includes(s.id));
+    state.ui.selected = []; render(); toast("已删除选中项"); return;
+  }
+  state.skills.forEach(s=>{ if(ids.includes(s.id)) s.enabled = kind==="on"; });
+  render(); toast(kind==="on"?"已启用选中项":"已停用选中项");
+}
+function recalcAll(includeManual){
+  let n = 0;
+  state.skills.forEach(s=>{
+    if(s.manual && !includeManual) return;
+    const c = classify(s.name, s.desc);
+    s.category = c.cat;
+    if(includeManual) s.manual = false;
+    n++;
+  });
+  render(); toast(`已重新归类 ${n} 个 Skill`);
+}
+
+function toggleCat(id){
+  state.ui.cat = state.ui.cat===id ? "all" : id;
+  state.ui.view = "skills"; render();
+}
+
+document.addEventListener("click", e=>{
+  const t = e.target;
+  const openEl = t.closest("[data-open]");
+  if(openEl){ openSheet(openEl.dataset.open); return; }
+  const favEl = t.closest("[data-fav]");
+  if(favEl){
+    const s = state.skills.find(x=>x.id===favEl.dataset.fav);
+    if(s){ s.favorite = !s.favorite; saveState(); render(); toast(s.favorite? "已收藏 "+s.name : "已取消收藏"); }
+    return;
+  }
+  const useEl = t.closest("[data-use]");
+  if(useEl){
+    const s = state.skills.find(x=>x.id===useEl.dataset.use);
+    if(s){ s.usage++; s.lastUsed = new Date().toISOString(); (s.logs=s.logs||[]).unshift({t:s.lastUsed, note:""}); saveState(); render(); toast(s.name+" 使用 +1"); }
+    return;
+  }
+  const starEl = t.closest("[data-star]");
+  if(starEl){
+    const s = state.skills.find(x=>x.id===starEl.dataset.star);
+    if(s){ s.rating = Math.min(5, (s.rating||0)+1); saveState(); render(); toast("评分："+s.rating+" 星"); }
+    return;
+  }
+  const tgEl = t.closest("[data-toggle]");
+  if(tgEl){
+    const s = state.skills.find(x=>x.id===tgEl.dataset.toggle);
+    if(s){ s.enabled = !s.enabled; saveState(); render(); }
+    return;
+  }
+  const jc = t.closest("[data-jumpcat]");
+  if(jc){ toggleCat(jc.dataset.jumpcat); return; }
+  const jt = t.closest("[data-jumptag]");
+  if(jt){ state.ui.tag = jt.dataset.jumptag; state.ui.cat="all"; state.ui.view="skills"; render(); return; }
+  const b = t.closest("[data-batch]");
+  if(b){ batchAction(b.dataset.batch); return; }
+  const rc = t.closest("[data-reclass]");
+  if(rc){
+    if(rc.dataset.reclass==="all" && !confirm("会覆盖所有人工分类，继续？")) return;
+    recalcAll(rc.dataset.reclass==="all"); return;
+  }
+  const dc = t.closest("[data-delcat]");
+  if(dc){
+    const id = dc.dataset.delcat;
+    if(!confirm("删除该分类？其下 Skill 将被移到“其他”。")) return;
+    state.skills.forEach(s=>{ if(s.category===id) s.category = "other"; });
+    state.cats = state.cats.filter(c=>c.id!==id);
+    render(); toast("分类已删除"); return;
+  }
+  const ac = t.closest("[data-addcat]");
+  if(ac){
+    const name = prompt("新分类名称：");
+    if(!name) return;
+    const id = "c_"+Math.random().toString(36).slice(2,7);
+    state.cats.splice(state.cats.length-1, 0, {id, name:name.trim(), color:"#475569", kw:[]});
+    render(); toast("已新增分类"); return;
+  }
+  const ghi = t.closest("[data-ghimport]");
+  if(ghi){
+    const box = document.getElementById("ghUrl");
+    const v = box ? box.value.trim() : "";
+    if(!v){ toast("先粘贴一个 GitHub 链接"); return; }
+    importFromGithub(v);
+    return;
+  }
+  const gh = t.closest("[data-gh]");
+  if(gh){
+    const act = gh.dataset.gh;
+    const ru = document.getElementById("sRelay"), rs = document.getElementById("sSecret"), au = document.getElementById("sAuto");
+    if(ru) syncCfg.relayUrl = ru.value.trim().replace(/\/+$/,"");
+    if(rs) syncCfg.relaySecret = rs.value.trim();
+    if(au) syncCfg.auto = au.checked;
+    if(act==="save"){
+      saveSyncCfg(); render(); toast(syncReady()? "配置已保存，正在同步…" : "配置已保存");
+      if(syncReady() && syncCfg.auto) pullRemote(false);
+      return;
+    }
+    if(act==="sync"){ saveSyncCfg(); syncNow(); return; }
+    if(act==="pull"){ saveSyncCfg(); pullRemote(true); return; }
+    if(act==="push"){
+      saveSyncCfg();
+      if(!syncReady()){ toast("先填中转服务地址"); return; }
+      if(!confirm("用本地数据覆盖飞书多维表格？")) return;
+      pushRemote(true); return;
+    }
+    if(act==="clear"){
+      if(!confirm("清除本机的同步配置？云端数据不会被删除。")) return;
+      syncCfg = { relayUrl:"https://skilllens-relay-ioudwzrmot.cn-hangzhou.fcapp.run", relaySecret:"", auto:true, lastSync:null, remoteSavedAt:null, lastError:"" };
+      saveSyncCfg(); render(); toast("已清除同步配置"); return;
+    }
+    return;
+  }
+  const im = t.closest("[data-imp]");
+  if(im){
+    const kind = im.dataset.imp;
+    if(kind==="md"){
+      const el = document.getElementById("pasteMd");
+      if(el){ el.scrollIntoView({block:"center"}); el.focus(); }
+      return;
+    }
+    document.getElementById("fileInput").dataset.mode = kind;
+    document.getElementById("fileInput").click(); return;
+  }
+  const ex = t.closest("[data-exp]");
+  if(ex){ ex.dataset.exp==="csv"? exportCSV() : exportJSON(); return; }
+  const rs = t.closest("[data-reset]");
+  if(rs){
+    if(rs.dataset.reset==="clear"){
+      if(!confirm("清空全部数据？建议先导出备份。")) return;
+      state.skills = []; state.cats = CAT_DEFS.map(c=>({...c})); render(); toast("已清空");
+    } else if(rs.dataset.reset==="empty"){
+      if(!confirm("清空所有 Skill？分类体系与同步配置保留，此操作不可撤销。")) return;
+      state.skills = []; state.ui.selected = []; render();
+      if(syncReady() && confirm("同时把云端也清空？其他设备同步后也会变空。")) pushRemote(true);
+      else toast("已清空全部 Skill");
+      return;
+    } else if(rs.dataset.reset==="keepfav"){
+      const keep = state.skills.filter(s=>s.favorite);
+      if(!keep.length){ toast("还没有收藏项，先点 ♥ 收藏几个"); return; }
+      if(!confirm(`只保留 ${keep.length} 个收藏项，其余全部删除？`)) return;
+      state.skills = keep; state.ui.selected = []; render(); toast(`已保留 ${keep.length} 个收藏项`);
+    } else {
+      if(!confirm("用内置种子数据覆盖当前数据？")) return;
+      state.cats = CAT_DEFS.map(c=>({...c}));
+      state.skills = SEED.map(x=>makeSkill(x));
+      render(); toast("已恢复种子数据");
+    }
+    return;
+  }
+  const dd = t.closest("#dropDir");
+  if(dd){ document.getElementById("dirInput").click(); return; }
+});
+
+document.addEventListener("change", e=>{
+  const t = e.target;
+  if(t.id==="q"){ state.ui.q = t.value; return; }
+  if(t.id==="fCat"){ state.ui.cat = t.value; render(); return; }
+  if(t.id==="fSrc"){ state.ui.src = t.value; render(); return; }
+  if(t.id==="fStatus"){ state.ui.status = t.value; render(); return; }
+  if(t.id==="fTag"){ state.ui.tag = t.value; render(); return; }
+  if(t.id==="fStar"){ state.ui.minStar = +t.value; render(); return; }
+  if(t.id==="fFav"){ state.ui.fav = t.value; render(); return; }
+  if(t.id==="sAuto"){ syncCfg.auto = t.checked; saveSyncCfg(); refreshSyncBadge(); return; }
+  if(t.id==="fSort"){ state.ui.sort = t.value; render(); return; }
+  if(t.id==="batchCat" && t.value){
+    state.skills.forEach(s=>{ if(state.ui.selected.includes(s.id)){ s.category = t.value; s.manual = true; } });
+    t.value = ""; render(); toast("已批量设置分类"); return;
+  }
+  if(t.id==="selAll"){
+    const list = filteredSkills();
+    state.ui.selected = t.checked ? list.map(s=>s.id) : [];
+    render(); return;
+  }
+  if(t.dataset && t.dataset.ck){
+    const id = t.dataset.ck;
+    if(t.checked){ if(!state.ui.selected.includes(id)) state.ui.selected.push(id); }
+    else state.ui.selected = state.ui.selected.filter(x=>x!==id);
+    const b = document.querySelector(".batch b");
+    render(); return;
+  }
+  if(t.dataset && t.dataset.catname){
+    const c = state.cats.find(x=>x.id===t.dataset.catname); if(c) c.name = t.value.trim()||c.name;
+    saveState(); return;
+  }
+  if(t.dataset && t.dataset.catcolor){
+    const c = state.cats.find(x=>x.id===t.dataset.catcolor); if(c) c.color = t.value;
+    saveState(); render(); return;
+  }
+  if(t.dataset && t.dataset.catkw){
+    const c = state.cats.find(x=>x.id===t.dataset.catkw);
+    if(c) c.kw = t.value.split(/[，,]/).map(x=>x.trim()).filter(Boolean);
+    saveState(); toast("关键词已更新，可点“重新自动归类”生效"); return;
+  }
+  if(t.id==="fileInput" && t.files && t.files.length){
+    const f = t.files[0];
+    f.text().then(txt=>{
+      if(t.dataset.mode==="csv") importJSON(JSON.stringify(fromCSV(txt).map(x=>({...x, source:"import"}))));
+      else importJSON(txt);
+    });
+    t.value = ""; return;
+  }
+  if(t.id==="dirInput" && t.files && t.files.length){ scanFiles(t.files); t.value=""; return; }
+});
+
+document.getElementById("btnScan").onclick = ()=> document.getElementById("dirInput").click();
+document.getElementById("btnAdd").onclick = openAdd;
+document.getElementById("btnExport").onclick = exportJSON;
+document.getElementById("sheetClose").onclick = closeSheet;
+document.getElementById("overlay").onclick = closeSheet;
+document.querySelectorAll(".nav-item").forEach(b=>{ b.onclick = ()=> setView(b.dataset.view); });
+(function buildTabbar(){
+  const bar = document.getElementById("tabbar");
+  const items = [["dashboard","◱","总览"],["skills","☰","技能"],["categories","◈","分类"],["data","⇅","导入"],["sync","☁","同步"]];
+  bar.innerHTML = items.map(([v,i,t])=>`<button data-tab="${v}"><span class="t-ico">${i}</span><span class="t-txt">${t}</span></button>`).join("");
+  bar.querySelectorAll("[data-tab]").forEach(b=>{ b.onclick = ()=> setView(b.dataset.tab); });
+  document.getElementById("fabAdd").onclick = ()=> openAdd();
+})();
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape") closeSheet();
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){
+    e.preventDefault(); setView("skills");
+    setTimeout(()=>{ const q=document.getElementById("q"); if(q) q.focus(); }, 30);
+  }
+});
+
+/* 输入框实时搜索：用 input 事件 */
+let searchTimer = null;
+document.addEventListener("input", e=>{
+  if(e.target && e.target.id==="q"){
+    state.ui.q = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(()=>{
+      const list = filteredSkills();
+      const listEl = document.querySelector(".skill-list");
+      if(listEl) listEl.innerHTML = list.length? list.map(s=>skillRow(s)).join("") : `<div class="empty">没有匹配的 Skill<div class="small" style="margin-top:6px">换个关键词，或清空筛选条件</div></div>`;
+      const cnt = document.querySelector(".batch b"); if(cnt) cnt.textContent = list.length;
+      const all = document.getElementById("selAll"); if(all) all.checked = false;
+      state.ui.selected = [];
+    }, 180);
+  }
+});
+
+
+
+/* ================= GitHub 链接解析导入 ================= */
+function ghHeaders(extra){
+  return Object.assign({ "Accept": "application/vnd.github+json" }, extra||{});
+}
+async function ghJson(url){
+  const res = await fetch(url, { headers: ghHeaders() });
+  if(!res.ok){
+    let msg = "";
+    try{ const j = await res.json(); msg = j.message || ""; }catch(e){}
+    if(res.status === 403 && /rate limit/i.test(msg)){
+      throw new Error("GitHub 接口限流（匿名每小时 60 次）。稍后再试，或直接粘贴单个 SKILL.md 的 raw 链接。");
+    }
+    throw new Error("GitHub " + res.status + (msg? "：" + msg : ""));
+  }
+  return await res.json();
+}
+async function fetchText(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("读取文件失败 HTTP " + res.status);
+  return await res.text();
+}
+function parseGithubUrl(input){
+  let u = String(input||"").trim().replace(/\s+/g,"").replace(/\/+$/,"").replace(/\.git$/,"");
+  let m;
+  // raw 文件
+  m = u.match(/^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
+  if(m) return { type:"file", owner:m[1], repo:m[2], branch:m[3], path:m[4] };
+  // gist
+  m = u.match(/^https?:\/\/gist\.github\.com\/(?:[^/]+\/)?([0-9a-f]+)$/i);
+  if(m) return { type:"gist", id:m[1] };
+  // blob
+  m = u.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
+  if(m) return { type:"file", owner:m[1], repo:m[2], branch:m[3], path:m[4] };
+  // tree
+  m = u.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.+))?$/);
+  if(m) return { type:"repo", owner:m[1], repo:m[2], branch:m[3], sub:m[4]||"" };
+  // repo root
+  m = u.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)$/);
+  if(m) return { type:"repo", owner:m[1], repo:m[2], branch:"", sub:"" };
+  // owner/repo 简写
+  m = u.match(/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
+  if(m) return { type:"repo", owner:m[1], repo:m[2], branch:"", sub:"" };
+  return null;
+}
+function addGithubItems(items){
+  let added = 0, skipped = 0;
+  items.forEach(it=>{
+    if(!it || !it.name) return;
+    if(state.skills.some(s=>s.name===it.name)){ skipped++; return; }
+    state.skills.push(makeSkill(it)); added++;
+  });
+  return { added, skipped };
+}
+function setGhResult(html){
+  state.ui.ghResult = html;
+  const el = document.getElementById("ghResult");
+  if(el) el.innerHTML = html;
+}
+async function importFromGithub(rawUrl){
+  state.ui.ghUrl = rawUrl;
+  const info = parseGithubUrl(rawUrl);
+  if(!info){
+    setGhResult('<span style="color:var(--danger)">链接格式没认出来。支持 github.com/owner/repo、/tree/branch/子目录、/blob/branch/文件、raw.githubusercontent.com、gist.github.com。</span>');
+    return;
+  }
+  setGhResult("正在解析…");
+  syncCfg && (syncCfg.lastError = "");
+  try{
+    let items = [];
+    let label = "";
+    if(info.type === "file"){
+      const text = await fetchText("https://raw.githubusercontent.com/" + info.owner + "/" + info.repo + "/" + info.branch + "/" + info.path);
+      const fm = parseFrontmatter(text);
+      if(!fm) throw new Error("这个文件没有有效的 frontmatter");
+      const folder = info.path.split("/").slice(-2)[0] || info.path;
+      items.push({ name: fm.name || folder, desc: fm.desc, source:"github",
+                   path: "github.com/" + info.owner + "/" + info.repo + "/" + info.path });
+      label = info.owner + "/" + info.repo;
+    } else if(info.type === "gist"){
+      const g = await ghJson("https://api.github.com/gists/" + info.id);
+      Object.keys(g.files||{}).forEach(k=>{
+        if(!/\.md$/i.test(k)) return;
+        const fm = parseFrontmatter(g.files[k].content || "");
+        if(!fm) return;
+        items.push({ name: fm.name || k.replace(/\.md$/i,""), desc: fm.desc, source:"github",
+                     path: "gist.github.com/" + info.id + "/" + k });
+      });
+      label = "Gist " + info.id.slice(0,8);
+    } else {
+      let branch = info.branch;
+      if(!branch){
+        const repoInfo = await ghJson("https://api.github.com/repos/" + info.owner + "/" + info.repo);
+        branch = repoInfo.default_branch || "main";
+      }
+      const tree = await ghJson("https://api.github.com/repos/" + info.owner + "/" + info.repo + "/git/trees/" + encodeURIComponent(branch) + "?recursive=1");
+      const prefix = info.sub ? info.sub.replace(/^\/|\/$/g,"") + "/" : "";
+      const files = (tree.tree||[]).filter(t => t.type === "blob" && /SKILL\.md$/i.test(t.path) && t.path.startsWith(prefix)).slice(0, 300);
+      if(!files.length) throw new Error("这个仓库（或子目录）里没找到 SKILL.md");
+      setGhResult("找到 " + files.length + " 个 SKILL.md，正在读取…");
+      const results = [];
+      const batch = 6;
+      for(let i=0;i<files.length;i+=batch){
+        const slice = files.slice(i, i+batch);
+        const got = await Promise.all(slice.map(async f=>{
+          try{
+            const text = await fetchText("https://raw.githubusercontent.com/" + info.owner + "/" + info.repo + "/" + branch + "/" + f.path);
+            const fm = parseFrontmatter(text);
+            if(!fm) return null;
+            const folder = f.path.split("/").slice(-2)[0] || f.path;
+            return { name: fm.name || folder, desc: fm.desc, source:"github",
+                     path: "github.com/" + info.owner + "/" + info.repo + "/" + f.path };
+          }catch(e){ return null; }
+        }));
+        got.forEach(x=>{ if(x) results.push(x); });
+        setGhResult("读取中… " + Math.min(i+batch, files.length) + " / " + files.length);
+      }
+      items = results;
+      label = info.owner + "/" + info.repo + (info.sub? " · " + info.sub : "") + " (" + branch + ")";
+    }
+    const r = addGithubItems(items);
+    const names = items.slice(0, 24).map(x=>x.name);
+    state.ui.ghResult = `已从 <b>${esc(label)}</b> 解析 ${items.length} 个技能：<b style="color:var(--accent)">新增 ${r.added}</b>，跳过重复 ${r.skipped}。`
+      + (names.length? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${names.map(n=>`<span class="chip mono">${esc(n)}</span>`).join("")}${items.length>24?`<span class="chip">+${items.length-24}</span>`:""}</div>`:"");
+    render();
+    toast("GitHub 导入完成：新增 " + r.added + " 个");
+  }catch(e){
+    setGhResult('<span style="color:var(--danger)">导入失败：' + esc(e.message) + '</span>');
+    toast("导入失败：" + e.message);
+  }
+}
+
+/* ================= 云同步：飞书多维表格中转 ================= */
+const SYNC_KEY = "skilllens.sync.v2";
+let syncCfg = { relayUrl:"https://skilllens-relay-ioudwzrmot.cn-hangzhou.fcapp.run", relaySecret:"", auto:true, lastSync:null, remoteSavedAt:null, lastError:"" };
+let pushTimer = null, syncing = false;
+
+function loadSyncCfg(){
+  try{
+    const raw = localStorage.getItem(SYNC_KEY);
+    if(raw) syncCfg = Object.assign(syncCfg, JSON.parse(raw));
+  }catch(e){}
+}
+function saveSyncCfg(){
+  try{ localStorage.setItem(SYNC_KEY, JSON.stringify(syncCfg)); }catch(e){}
+}
+function syncReady(){ return !!syncCfg.relayUrl; }
+function syncPending(){ return !!(syncCfg.lastSync && state.savedAt && state.savedAt > syncCfg.lastSync); }
+function syncBadge(){
+  if(!syncCfg.relayUrl) return "未设置";
+  if(syncing) return "同步中";
+  if(syncPending()) return "待上传";
+  return "已同步";
+}
+function syncPayload(){
+  return { app:"SkillLens", version:2, savedAt: state.savedAt || new Date().toISOString(),
+           cats: state.cats, skills: state.skills };
+}
+async function relayApi(path, method, body){
+  const base = (syncCfg.relayUrl||"").replace(/\/+$/,"");
+  const headers = { "Content-Type":"application/json" };
+  if(syncCfg.relaySecret) headers["X-Relay-Secret"] = syncCfg.relaySecret;
+  const res = await fetch(base + path, {
+    method: method || "GET",
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = {};
+  try{ j = await res.json(); }catch(e){}
+  if(!res.ok || j.ok === false) throw new Error(j.error || ("中转 HTTP " + res.status));
+  return j;
+}
+async function pushRemote(manual){
+  if(!syncReady()){ if(manual) toast("先填中转服务地址并保存配置"); return; }
+  syncing = true; refreshSyncBadge();
+  try{
+    await relayApi("/api/sync", "POST", syncPayload());
+    syncCfg.lastSync = new Date().toISOString();
+    syncCfg.remoteSavedAt = state.savedAt;
+    syncCfg.lastError = "";
+    saveSyncCfg();
+    if(manual) toast("已上传到飞书多维表格");
+    if(state.ui.view==="sync") render();
+  }catch(e){
+    syncCfg.lastError = e.message;
+    toast("上传失败：" + e.message);
+  }
+  syncing = false; refreshSyncBadge();
+}
+async function fetchRemote(){
+  if(!syncReady()) return null;
+  return await relayApi("/api/sync", "GET");
+}
+function applyRemote(d){
+  state.skills = (d.skills||[]).map(x=>makeSkill(x));
+  if(Array.isArray(d.cats) && d.cats.length) state.cats = d.cats;
+  state.savedAt = d.savedAt || new Date().toISOString();
+  state.isSeed = false;
+  state._hash = JSON.stringify({ s: state.skills, c: state.cats });
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({ skills: state.skills, cats: state.cats, savedAt: state.savedAt })); }catch(e){}
+  render();
+}
+async function pullRemote(manual){
+  if(!syncReady()){ if(manual) toast("先填中转服务地址并保存配置"); return; }
+  syncing = true; refreshSyncBadge();
+  try{
+    const d = await fetchRemote();
+    const newer = state.isSeed || (d.savedAt||"") > (state.savedAt||"");
+    if(!newer){
+      if(manual) toast("云端不比本地新，无需拉取");
+    } else {
+      const localDirty = syncCfg.lastSync && state.savedAt && state.savedAt > syncCfg.lastSync;
+      if(localDirty && manual){
+        if(!confirm("云端更新（" + fmtDate(d.savedAt) + "），本地也有修改。\n确定用云端覆盖本地？")){ syncing=false; refreshSyncBadge(); return; }
+        applyRemote(d); toast("已用云端数据覆盖本地");
+      } else if(localDirty){
+        toast("云端有更新，本地也有改动——请到云同步页手动选择");
+      } else {
+        applyRemote(d); toast(manual? "已拉取云端最新数据" : "已同步云端最新数据");
+      }
+    }
+    syncCfg.lastSync = new Date().toISOString();
+    syncCfg.remoteSavedAt = d.savedAt || null;
+    saveSyncCfg();
+  }catch(e){
+    syncCfg.lastError = e.message;
+    if(manual || !syncCfg.lastErrorShown){ toast("拉取失败：" + e.message); syncCfg.lastErrorShown = true; saveSyncCfg(); }
+  }
+  syncing = false; refreshSyncBadge();
+  if(state.ui.view==="sync") render();
+}
+async function syncNow(){
+  if(!syncReady()){ toast("先在下方填中转服务地址并保存配置"); return; }
+  syncing = true; refreshSyncBadge();
+  try{
+    const d = await fetchRemote();
+    const remoteNewer = (d.savedAt||"") > (state.savedAt||"");
+    if(!remoteNewer){ await pushRemote(false); toast("已上传本地最新数据"); }
+    else {
+      const localDirty = syncCfg.lastSync && state.savedAt && state.savedAt > syncCfg.lastSync;
+      if(localDirty){
+        const useRemote = confirm("云端更新：" + fmtDate(d.savedAt) + "\n本地也改过：确定用云端覆盖本地？（取消=用本地覆盖云端）");
+        if(useRemote){ applyRemote(d); syncCfg.lastSync = new Date().toISOString(); syncCfg.remoteSavedAt = d.savedAt; saveSyncCfg(); toast("已拉取云端"); }
+        else { await pushRemote(false); toast("已用本地覆盖云端"); }
+      } else {
+        applyRemote(d); syncCfg.lastSync = new Date().toISOString(); syncCfg.remoteSavedAt = d.savedAt; saveSyncCfg(); toast("已拉取云端最新数据");
+      }
+    }
+  }catch(e){ syncCfg.lastError = e.message; toast("同步失败：" + e.message); }
+  syncing = false; refreshSyncBadge();
+  render();
+}
+function schedulePush(){
+  if(!syncCfg.auto || !syncReady() || state.isSeed) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(()=>{ pushRemote(false); }, 4000);
+}
+function refreshSyncBadge(){
+  const b = document.getElementById("badgeSync");
+  if(b) b.textContent = syncBadge();
+}
+function renderSync(){
+  return `
+  <div class="grid" style="grid-template-columns:1.25fr 1fr">
+    <section class="card">
+      <div class="card-h"><h2>连接飞书中转服务</h2><span class="sub">中转服务对接飞书多维表格，一次配置两端通用</span></div>
+      <div class="pad">
+        <div class="field">
+          <label>中转服务地址</label>
+          <input type="text" id="sRelay" placeholder="https://&lt;trigger&gt;.&lt;region&gt;.fcapp.run" value="${esc(syncCfg.relayUrl)}">
+          <div class="hint">部署中转（阿里云 FC / Cloudflare Worker / Vercel Function）后得到的公网地址，<b>不要</b>带 <span class="mono">/api/sync</span> 后缀，页面会自动拼接。</div>
+        </div>
+        <div class="field">
+          <label>访问口令（可选）</label>
+          <input type="password" id="sSecret" placeholder="与中转服务 RELAY_SECRET 一致即可" value="${esc(syncCfg.relaySecret)}">
+          <div class="hint">若中转设置了访问口令，这里填同一个；没设置可留空。口令只存在本机浏览器。</div>
+        </div>
+        <div class="field row" style="gap:14px;flex-wrap:wrap">
+          <label class="switch" style="margin:0"><input type="checkbox" id="sAuto" ${syncCfg.auto?"checked":""}> 自动同步（打开拉取、改动后 4 秒上传）</label>
+        </div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn primary" data-gh="save">保存配置</button>
+          <button class="btn" data-gh="sync">立即同步</button>
+          <button class="btn" data-gh="pull">从云端拉取</button>
+          <button class="btn" data-gh="push">覆盖上传</button>
+          <button class="btn danger" data-gh="clear">清除配置</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><h2>同步状态</h2><span class="sub">${syncBadge()}</span></div>
+      <div class="pad">
+        <div class="kv">
+          <div class="mini-stat"><div class="k">本地数据时间</div><div class="v" style="font-size:12px;font-weight:500">${fmtDate(state.savedAt)}</div></div>
+          <div class="mini-stat"><div class="k">上次同步</div><div class="v" style="font-size:12px;font-weight:500">${fmtDate(syncCfg.lastSync)}</div></div>
+          <div class="mini-stat"><div class="k">云端数据时间</div><div class="v" style="font-size:12px;font-weight:500">${fmtDate(syncCfg.remoteSavedAt)}</div></div>
+          <div class="mini-stat"><div class="k">本机记录</div><div class="v">${state.skills.length}</div></div>
+        </div>
+        ${syncCfg.lastError? `<div class="small" style="margin-top:10px;color:var(--danger)">最近一次错误：${esc(syncCfg.lastError)}</div>`:""}
+        <div class="small muted" style="margin-top:12px;line-height:1.8">
+          · 首次使用：先在中转服务配好飞书应用与多维表格，再把公网地址填到上方 → 保存配置。<br>
+          · 手机端同样填一次中转地址与口令，两端从此共用一份数据。<br>
+          · 冲突策略：谁的时间更新以谁为准；两边都改过时会弹窗让你选择，不会静默覆盖。
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:14px">
+    <div class="card-h"><h2>同步说明</h2></div>
+    <div class="pad small" style="color:var(--ink-2);line-height:1.9">
+      1. 浏览器不直接接触飞书凭证：App ID / App Secret 只保存在中转服务，页面只访问中转地址。<br>
+      2. 技能按 <span class="mono">SkillID</span> 逐条对账：本地新增/修改/删除会同步到多维表格，分类体系快照存在 Meta 表。<br>
+      3. 自动同步只在打开页面与改动后触发；遇到“云端更新且本地也改过”会提示手动处理。<br>
+      4. 换设备或清理浏览器前，可在「导入 / 导出」页导出 JSON 做离线备份。
+    </div>
+  </section>`;
+}
+
+/* ================= 初始化 ================= */
+loadState();
+loadSyncCfg();
+render();
+if(syncReady() && syncCfg.auto) setTimeout(()=>pullRemote(false), 700);
+</script>
+</body>
+</html>
