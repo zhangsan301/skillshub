@@ -1,0 +1,36 @@
+name: Update SkillLens app
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".deploy/index.html.patch.xz.b64"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply patch to index.html
+        run: |
+          set -e
+          base64 -d .deploy/index.html.patch.xz.b64 | xz -d > /tmp/update.patch
+          python3 -c "p='index.html'; open(p,'wb').write(open(p,'rb').read().replace(b'\r\n', b'\n'))"
+          python3 -c "import sys; print(open('/tmp/update.patch',encoding='utf-8').read().count('\\n'), 'patch lines')"
+          patch -p1 index.html -i /tmp/update.patch
+          grep -q 'data-catalog' index.html
+          wc -c index.html
+
+      - name: Commit and drop payload
+        run: |
+          rm -rf .deploy
+          git add -A
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat(app): 导入页新增「本站技能库」一键导入"
+          git push
