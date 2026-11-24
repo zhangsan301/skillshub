@@ -1,11 +1,11 @@
 {
   "app": "SkillHub",
   "version": 1,
-  "updatedAt": "2026-11-24",
+  "updatedAt": "2026-11-25",
   "skills": [
     {
       "name": "ffmpeg-skill",
-      "desc": "本地 FFmpeg 剪视频：截段、拼接、横转竖、字幕、去停顿、响度归一、平台导出，跑完自校验；素材不出本机。",
+      "desc": "本地 FFmpeg 剪视频/音频，素材不出本机：截取、拼接、横转竖、变速、字幕、贴图叠加、去长停顿、音画对齐、响度归一、HDR 转 SDR、平台导出并自检成片。依赖 FFmpeg 6.1+ 与 Python 3.10+，不要 API Key。",
       "category": "video",
       "tags": ["影视剪辑", "视频", "自动化"],
       "path": "skills/ffmpeg-skill/SKILL.md",
@@ -16,7 +16,7 @@
     },
     {
       "name": "last30days",
-      "desc": "近 30 天话题调研：Reddit、X、YouTube、HN、Polymarket、GitHub 帖子与互动量，合成带出处简报。",
+      "desc": "查某话题近 30 天真人怎么说：Reddit、X、YouTube、TikTok、HN、Polymarket、GitHub 帖子与互动量，合成带出处的简报。",
       "category": "insight",
       "tags": ["调研", "自动化"],
       "path": "skills/last30days/SKILL.md",
@@ -27,7 +27,7 @@
     },
     {
       "name": "modern-web-guidance",
-      "desc": "现代 Web 写法检索：dialog/Popover、容器查询、subgrid、View Transitions、表单与无障碍；写前端前先查。",
+      "desc": "写 HTML/CSS/客户端 JS 前先查的现代写法库：dialog/Popover、容器查询、subgrid、View Transitions、CWV、表单与无障碍。专治 AI 用过时写法。",
       "category": "dev",
       "tags": ["前端", "自动化"],
       "path": "skills/modern-web-guidance/SKILL.md",
@@ -38,7 +38,7 @@
     },
     {
       "name": "open-code-review",
-      "desc": "OCR 原生模式代码审查：读 diff 选文件、按类型匹配规则、顺调用链看影响，输出行级问题。",
+      "desc": "OCR 原生模式代码审查：读 diff 选文件、按类型匹配规则、顺调用链看影响，输出行级问题；只在你要求时才改代码。",
       "category": "dev",
       "tags": ["代码审查", "自动化"],
       "path": "skills/open-code-review/SKILL.md",
@@ -49,7 +49,7 @@
     },
     {
       "name": "open-code-review-delegate",
-      "desc": "同一套 OCR 流程，改用宿主 Agent 自己的模型审查，适合没有独立 API Key。",
+      "desc": "同一套 OCR 流程，审查改由宿主 Agent 的模型完成：OCR 选文件与规则，模型找缺陷并解释影响；无需另外配 API Key。",
       "category": "dev",
       "tags": ["代码审查", "自动化"],
       "path": "skills/open-code-review-delegate/SKILL.md",
@@ -60,7 +60,7 @@
     },
     {
       "name": "plannotator-review",
-      "desc": "在浏览器里对 diff 逐行批注、攒意见一次回给 Agent；多助手共用一套批注界面。",
+      "desc": "打开 Plannotator 浏览器审阅界面，在 diff 上逐行划词批注，攒意见一次回给 Agent；多助手共用一套批注收件箱。需手动 /plannotator-review 触发。",
       "category": "dev",
       "tags": ["代码审查", "协作"],
       "path": "skills/plannotator-review/SKILL.md",
@@ -71,7 +71,7 @@
     },
     {
       "name": "stitch-generate-design",
-      "desc": "调 Stitch MCP 出 UI：文字/图片生成页面、按提示改稿、出多版设计变体。",
+      "desc": "调 Stitch MCP 出 UI：文字/截图生成页面、按提示与 design token 改稿、出多版设计变体，带提示词增强与主题体系。界面美化的主入口。",
       "category": "design",
       "tags": ["创意", "设计"],
       "path": "skills/stitch-generate-design/SKILL.md",
@@ -82,7 +82,7 @@
     },
     {
       "name": "stitch-react-components",
-      "desc": "把 Stitch 设计稿转成 Vite/React 组件，或同步已有组件到最新设计。",
+      "desc": "把 Stitch 设计稿落成 Vite + React 组件，或把已有组件同步到最新设计；只保真不改审美。",
       "category": "dev",
       "tags": ["前端", "设计"],
       "path": "skills/stitch-react-components/SKILL.md",
@@ -90,6 +90,17 @@
       "favorite": false,
       "upstream": "https://raw.githubusercontent.com/google-labs-code/stitch-skills/HEAD/plugins/stitch-build/skills/react-components/SKILL.md",
       "repo": "google-labs-code/stitch-skills"
+    },
+    {
+      "name": "univer-cli",
+      "desc": "终端里造/改 .univer 文件：一个文件含 Sheet、Doc、Slide、Base、Board 多单元；隔离 worktree、Facade 读写、导入导出、截图预览、浏览器复核。需 npm i -g univer-cli（univer doctor 自检）。",
+      "category": "office",
+      "tags": ["表格", "文档", "幻灯片", "自动化"],
+      "path": "skills/univer-cli/SKILL.md",
+      "note": "依赖 npm 全局包 univer-cli；先 univer doctor 检查环境，再看 univer help <cmd>",
+      "favorite": false,
+      "upstream": "https://raw.githubusercontent.com/dream-num/skills/HEAD/skills/univer-cli/SKILL.md",
+      "repo": "dream-num/skills"
     }
   ]
 }
