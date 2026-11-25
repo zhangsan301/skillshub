@@ -1483,6 +1483,7 @@ document.addEventListener("click", e=>{
       if(syncReady() && syncCfg.auto) pullRemote(false);
       return;
     }
+    if(act==="login"){ saveSyncCfg(); ghLogin(); return; }
     if(act==="sync"){ saveSyncCfg(); syncNow(); return; }
     if(act==="pull"){ saveSyncCfg(); pullRemote(true); return; }
     if(act==="push"){
@@ -1855,6 +1856,50 @@ async function createGist(){
   }catch(e){ syncCfg.lastError = e.message; toast("创建失败：" + e.message); }
   syncing = false; refreshSyncBadge();
 }
+async function ghLogin(){
+  if(!syncCfg.token){ toast("先粘贴 GitHub Token，再点登录"); return; }
+  syncing = true; refreshSyncBadge();
+  try{
+    const me = await ghApi("/user");
+    syncCfg.login = me.login || "";
+    syncCfg.avatar = me.avatar_url || "";
+    // 找已有的 skilllens.json Gist
+    let found = syncCfg.gist || "";
+    if(!found){
+      const list = await ghApi("/gists?per_page=100");
+      const hit = (list||[]).find(g=>g.files && g.files[GH_FILE]);
+      if(hit) found = hit.id;
+    }
+    saveSyncCfg();
+    if(found){
+      syncCfg.gist = found;
+      saveSyncCfg();
+      if(!syncCfg.lastSync){
+        /* 首次登录这台设备：以云端为准，直接采用云端库 */
+        const d = await fetchRemote();
+        applyRemote(d);
+        syncCfg.lastSync = new Date().toISOString();
+        syncCfg.remoteSavedAt = d.savedAt || null;
+        syncCfg.localAdopted = true;
+        syncCfg.lastError = "";
+        saveSyncCfg();
+      } else {
+        await pullRemote(false);
+      }
+      toast("已登录 @" + syncCfg.login + "，已自动载入云端技能库");
+    } else {
+      await createGist();
+      toast("已登录 @" + syncCfg.login + "，已为这个账号建好私有技能库");
+    }
+    syncCfg.lastError = "";
+  }catch(e){
+    syncCfg.lastError = e.message;
+    toast("登录失败：" + e.message);
+  }finally{
+    syncing = false; saveSyncCfg(); refreshSyncBadge();
+    if(state.ui.view==="sync") render();
+  }
+}
 async function pushRemote(manual){
   if(!syncReady()){ if(manual) toast("先填 Token 并保存配置"); return; }
   syncing = true; refreshSyncBadge();
@@ -1960,12 +2005,16 @@ function renderSync(){
   return `
   <div class="grid" style="grid-template-columns:1.25fr 1fr">
     <section class="card">
-      <div class="card-h"><h2>连接 GitHub Gist</h2><span class="sub">私有 Gist 当数据库，一次配置两端通用</span></div>
+      <div class="card-h"><h2>${syncReady()? (syncCfg.login? "已登录 @"+esc(syncCfg.login) : "已连接 GitHub") : "登录 GitHub 账号"}</h2><span class="sub">登录一次，之后每台设备打开自动载入你自己的技能库</span></div>
       <div class="pad">
         <div class="field">
           <label>GitHub Token（只需 gist 权限）</label>
           <input type="password" id="sToken" placeholder="ghp_… 或 github_pat_…" value="${esc(syncCfg.token)}">
           <div class="hint">在 GitHub → Settings → Developer settings → Personal access tokens 生成，勾选 <b>gist</b> 即可。Token 只存在本机浏览器，不会写进云端数据或导出文件。</div>
+          <div class="row" style="gap:8px;margin-top:10px;align-items:center">
+            <button class="btn primary" data-gh="login">用这个 Token 登录</button>
+            <span class="small muted">${syncReady()? "已登录" + (syncCfg.login? " @"+esc(syncCfg.login) : "") + " · 打开页面会自动拉取，改动自动上传" : "首次登录会自动找已有库，没有就新建一个私有 Gist"}</span>
+          </div>
         </div>
         <div class="field">
           <label>Gist ID（已有库就填，没有就留空后点“创建”）</label>
@@ -2022,6 +2071,22 @@ loadState();
 loadSyncCfg();
 render();
 if(syncReady() && syncCfg.auto) setTimeout(()=>pullRemote(false), 700);
+/* 空库自动载入站点技能库，打开就能看到，不用手动点 */
+if(!syncReady() && !state.skills.length){
+  setTimeout(async ()=>{
+    try{
+      if(state.skills.length) return;
+      const res = await fetch("./skills/index.json", { cache:"no-store" });
+      if(!res.ok) return;
+      const d = await res.json();
+      const items = (Array.isArray(d)? d : (d.skills||[])).filter(x=>x && x.name).map(x=>({name:x.name, desc:x.desc||x.description||"", category:x.category||null, manual:!!x.category, tags:x.tags||null, source:"import", path:x.path||("skills/"+x.name), note:x.note||"", favorite:!!x.favorite}));
+      if(!items.length || state.skills.length) return;
+      const r = addGithubItems(items);
+      render();
+      toast("已自动载入本站技能库 " + r.added + " 个");
+    }catch(e){}
+  }, 900);
+}
 </script>
 </body>
 </html>
